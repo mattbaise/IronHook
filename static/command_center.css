@@ -17,6 +17,9 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 .site-header, main, footer { width: min(1160px, calc(100% - 32px)); margin-inline: auto; }
 .site-header { min-height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--border); }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.operator-link { display: inline-flex; min-height: 38px; align-items: center; border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); padding: 8px 12px; font-size: 12px; font-weight: 850; text-decoration: none; }
+.operator-link:hover, .operator-link:focus-visible { background: var(--accent); color: #101820; }
 .brand, h1, h2, p { margin: 0; }
 .brand { color: var(--accent); font-weight: 900; letter-spacing: .08em; font-size: 13px; }
 .brand span { color: var(--muted); font-weight: 650; }
@@ -76,7 +79,8 @@ main { padding: 22px 0 30px; }
 footer { padding: 18px 0 25px; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; }
 
 @media (max-width: 720px) {
-  .site-header { align-items: flex-start; flex-direction: column; justify-content: center; }
+  .site-header { align-items: flex-start; flex-direction: column; justify-content: center; padding-block: 20px; }
+  .header-actions { width: 100%; justify-content: space-between; }
   .metrics, .layout, .layout.lower { grid-template-columns: 1fr; }
   .yard-blocks { grid-template-columns: 1fr; }
 }
