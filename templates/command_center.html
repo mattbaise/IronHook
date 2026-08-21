@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IronHook Command Center</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='command_center.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="brand">IRONHOOK <span>BY BAISELINE</span></p>
+      <h1>Command Center</h1>
+      <p class="muted">Live terminal operations</p>
+    </div>
+    <div class="sync-status" id="sync-status"><i></i><span>Connecting…</span></div>
+  </header>
+
+  <main>
+    <section class="metrics" aria-label="Terminal summary">
+      <article><span>Containers in yard</span><strong id="containers-in-yard">—</strong><small id="container-note">Loading records</small></article>
+      <article><span>Usable yard occupancy</span><strong id="yard-occupancy">—</strong><small id="yard-note">Loading capacity</small></article>
+      <article><span>Equipment ready</span><strong id="equipment-ready">—</strong><small id="equipment-note">Loading fleet</small></article>
+    </section>
+
+    <section class="layout">
+      <article class="panel">
+        <div class="panel-head">
+          <div><p class="overline">LIVE YARD</p><h2>Capacity by block</h2></div>
+          <button id="refresh-button" type="button">Refresh</button>
+        </div>
+        <div id="yard-blocks" class="yard-blocks" aria-live="polite">
+          <p class="muted">Loading yard blocks…</p>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><div><p class="overline">DISPATCH</p><h2>Active assignments</h2></div><span id="assignment-count" class="count">—</span></div>
+        <div id="assignments" class="list" aria-live="polite">
+          <p class="muted">Loading assignments…</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="layout lower">
+      <article class="panel">
+        <div class="panel-head"><div><p class="overline">CONTAINER FINDER</p><h2>Track a container</h2></div></div>
+        <form id="container-search" class="search">
+          <label for="container-number">Container number</label>
+          <div><input id="container-number" placeholder="Example: MSCU1234567" autocomplete="off"><button type="submit">Find</button></div>
+        </form>
+        <div id="container-result" class="result" aria-live="polite">
+          <p class="muted">Enter a container number to see its location and movement history.</p>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><div><p class="overline">EQUIPMENT</p><h2>Readiness</h2></div><span id="attention-count" class="count">—</span></div>
+        <div id="equipment" class="list" aria-live="polite">
+          <p class="muted">Loading equipment…</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>Demo system · Operational actions are role-based and audited · Safety stops always remain available</footer>
+  <script src="{{ url_for('static', filename='command_center.js') }}"></script>
+</body>
+</html>
