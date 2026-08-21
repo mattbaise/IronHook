@@ -15,7 +15,7 @@ def test_operator_screen_loads():
     assert b"operator.js" in response.data
 
 
-def test_command_center_still_loads():
+def test_command_center_still_loads_and_links_to_operator():
     app = create_app()
     app.config["TESTING"] = True
 
@@ -24,6 +24,8 @@ def test_command_center_still_loads():
 
     assert response.status_code == 200
     assert b"Command Center" in response.data
+    assert b'Operator Screen' in response.data
+    assert b'href="/operator"' in response.data
 
 
 def test_unknown_page_still_returns_json_404():
