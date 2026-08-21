@@ -1,94 +1,109 @@
-# IronHook API v1
+# IronHook v3
 
-This Flask API connects the IronHook Command Center to the PostgreSQL container-movement database.
+IronHook is a beginner-friendly Flask and PostgreSQL training project for terminal container movements.
 
-Open `http://127.0.0.1:5001` after starting Flask to use the live Command Center.
+It includes two browser screens:
 
-## What this first version does
+- **Command Center:** live yard capacity, equipment readiness, active dispatch and container tracking.
+- **Operator:** a mobile-friendly longshoreman screen for starting assignments, completing moves and stopping work for safety.
 
-- Checks database health
-- Lists and searches containers
-- Returns one container with its movement history
-- Returns live yard capacity
-- Returns the active dispatch queue
-- Starts an assignment with safety and hold checks
-- Completes a move in one database transaction
-- Records equipment operating time
-- Pauses an assignment with a worker safety stop
-- Creates audit records for important actions
-- Displays a live browser-based Command Center
+The existing Command Center remains available at `/`. The operator screen uses the same assignment API and is available at `/operator`.
 
-## Project files
+## Main files
 
-- `app.py` starts Flask.
-- `routes.py` contains the API routes and movement rules.
+- `app.py` starts Flask and serves both screens.
+- `routes.py` contains the API routes and movement safety rules.
 - `db.py` opens PostgreSQL connections.
-- `validation.py` checks incoming values.
-- `tests/test_validation.py` tests the validation rules.
+- `validation.py` validates incoming values.
+- `templates/command_center.html` is the Command Center.
+- `templates/operator.html` is the mobile operator screen.
+- `static/` contains the CSS and JavaScript for both screens.
+- `tests/` contains the automated tests.
 
-## Setup
+## Install on a Mac
 
-1. Create and activate a virtual environment.
+Open Terminal and move into the project folder:
+
+```bash
+cd ~/Projects/IronHook-GitHub/ironhook-api
+```
+
+Create a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-2. Install the packages.
+Install the packages:
 
 ```bash
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-3. Copy `.env.example` to `.env` and update `DATABASE_URL`.
-
-4. Create the database tables and demo records from the parent folder.
+Create your local environment file:
 
 ```bash
-psql "$DATABASE_URL" -f ../ironhook_container_schema_v1.sql
-psql "$DATABASE_URL" -f ../ironhook_demo_data_v1.sql
+cp .env.example .env
 ```
 
-5. Run the tests.
+Open `.env` in VS Code and update `DATABASE_URL` with your PostgreSQL username, password, host, port and database name.
+
+Example:
+
+```text
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ironhook
+FLASK_DEBUG=true
+PORT=5000
+```
+
+## Create the database
+
+PostgreSQL must be installed and running. From the IronHook project folder, run:
+
+```bash
+createdb ironhook
+psql "$DATABASE_URL" -f ironhook_container_schema_v1.sql
+psql "$DATABASE_URL" -f ironhook_demo_data_v1.sql
+```
+
+If the database already exists and already contains the IronHook tables, do not run the schema and demo files again.
+
+## Run all tests
 
 ```bash
 python -m pytest -v
 ```
 
-6. Start the API.
+The same complete test suite also runs automatically in GitHub Actions.
+
+## Start IronHook
 
 ```bash
 python app.py
 ```
 
-## Starter requests
+Then open:
 
-Health check:
+- Command Center: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+- Operator screen: [http://127.0.0.1:5000/operator](http://127.0.0.1:5000/operator)
 
-```bash
-curl http://127.0.0.1:5000/api/health
-```
+If your `.env` uses a different `PORT`, replace `5000` in those addresses.
 
-List containers:
+## Use the operator screen
 
-```bash
-curl http://127.0.0.1:5000/api/containers
-```
+1. Open `/operator` on a phone or computer.
+2. Enter the worker ID assigned by dispatch. Demo worker Matthew Baise uses worker ID `1`.
+3. Select **Start move** on a queued or assigned move.
+4. Select **Complete move**, choose the confirmation method, enter operating minutes and add notes.
+5. Select **Safety stop** whenever conditions are unsafe and describe the concern.
 
-Find one container and its history:
+The worker ID is stored only in that browser on that device. The API still verifies assignment ownership and safety rules.
 
-```bash
-curl http://127.0.0.1:5000/api/containers/MSCU1234567
-```
+## Assignment API used by the operator screen
 
-See yard capacity:
-
-```bash
-curl http://127.0.0.1:5000/api/yard/capacity
-```
-
-See the current dispatch queue:
+List active assignments:
 
 ```bash
 curl http://127.0.0.1:5000/api/assignments
@@ -126,14 +141,14 @@ curl -X POST http://127.0.0.1:5000/api/assignments/2/safety-stop \
   }'
 ```
 
-## Important v1 safety rules
+## Safety rules preserved in v3
 
-- A customs or security hold blocks a move.
-- Down or maintenance equipment blocks a move.
-- Restricted equipment does not start through the normal endpoint.
+- Customs or security holds block moves.
+- Down or maintenance equipment blocks moves.
+- Restricted equipment cannot start through the normal endpoint.
 - A safety stop pauses work immediately.
 - Only the assigned worker can complete a move.
 - The destination must be open, serviceable and unoccupied.
-- Move completion, container placement, equipment hours and audit history update together. If one fails, the whole transaction rolls back.
+- Move completion, container placement, equipment hours and audit history update in one database transaction.
 
-Authentication, permissions and controlled-exception approval will be added before production use.
+Authentication, production permissions and controlled-exception approval are still future production requirements.

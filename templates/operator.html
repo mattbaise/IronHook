@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101820">
+  <title>IronHook Operator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='operator.css') }}">
+</head>
+<body>
+  <header class="operator-header">
+    <div>
+      <p class="brand">IRONHOOK <span>BY BAISELINE</span></p>
+      <h1>Operator</h1>
+      <p class="muted">My dispatch assignments</p>
+    </div>
+    <a href="/" class="command-link">Command Center</a>
+  </header>
+
+  <main>
+    <section class="worker-panel" aria-labelledby="worker-heading">
+      <div>
+        <p class="overline">SHIFT SIGN-IN</p>
+        <h2 id="worker-heading">Operator ID</h2>
+      </div>
+      <form id="worker-form">
+        <label for="worker-id">Worker ID</label>
+        <div class="worker-entry">
+          <input id="worker-id" name="worker_id" type="number" min="1" inputmode="numeric" placeholder="Example: 1" required>
+          <button type="submit">Save</button>
+        </div>
+      </form>
+      <p id="worker-message" class="helper">Enter the worker ID assigned by dispatch.</p>
+    </section>
+
+    <section class="toolbar">
+      <div>
+        <p class="overline">LIVE DISPATCH</p>
+        <h2>Assignments <span id="assignment-count">—</span></h2>
+      </div>
+      <button id="refresh-button" class="secondary" type="button">Refresh</button>
+    </section>
+
+    <div id="connection-status" class="connection-status" role="status">
+      <i></i><span>Connecting to dispatch…</span>
+    </div>
+
+    <section id="assignments" class="assignment-list" aria-live="polite">
+      <article class="empty-state">Loading assignments…</article>
+    </section>
+  </main>
+
+  <dialog id="action-dialog">
+    <form id="action-form">
+      <div class="dialog-head">
+        <div>
+          <p class="overline" id="dialog-overline">MOVE ACTION</p>
+          <h2 id="dialog-title">Update assignment</h2>
+        </div>
+        <button id="close-dialog" class="icon-button" type="button" aria-label="Close">×</button>
+      </div>
+      <input id="dialog-assignment-id" type="hidden">
+      <input id="dialog-action" type="hidden">
+
+      <div id="complete-fields" hidden>
+        <label for="confirmation-method">Confirmation method</label>
+        <select id="confirmation-method">
+          <option value="SCAN">Scanner</option>
+          <option value="RFID">RFID</option>
+          <option value="GPS">GPS</option>
+          <option value="MANUAL">Manual confirmation</option>
+        </select>
+
+        <label for="operating-minutes">Operating minutes</label>
+        <input id="operating-minutes" type="number" min="1" max="720" inputmode="numeric" value="10">
+
+        <label for="completion-notes">Completion notes</label>
+        <textarea id="completion-notes" rows="3" placeholder="Container and destination confirmed"></textarea>
+      </div>
+
+      <div id="safety-fields" hidden>
+        <label for="safety-reason">Why is work stopping?</label>
+        <textarea id="safety-reason" rows="4" minlength="5" placeholder="Describe the safety concern clearly"></textarea>
+        <p class="safety-note">Safety stops take effect immediately and are recorded.</p>
+      </div>
+
+      <p id="dialog-error" class="error" role="alert"></p>
+      <button id="confirm-action" class="primary wide" type="submit">Confirm</button>
+    </form>
+  </dialog>
+
+  <footer>Stay alert · Confirm the box and destination · Stop work whenever conditions are unsafe</footer>
+  <script src="{{ url_for('static', filename='operator.js') }}"></script>
+</body>
+</html>
