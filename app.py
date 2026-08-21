@@ -17,6 +17,10 @@ def create_app():
     def command_center():
         return render_template("command_center.html")
 
+    @app.get("/operator")
+    def operator_screen():
+        return render_template("operator.html")
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404
