@@ -4,6 +4,12 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
 
 from routes import api
+from simulation.events import (
+    discharge_container,
+    place_container_in_yard,
+    start_truck_transit,
+)
+from simulation.vessel_state import create_initial_state
 
 
 def create_app():
@@ -12,6 +18,7 @@ def create_app():
     app = Flask(__name__)
     app.config["JSON_SORT_KEYS"] = False
     app.register_blueprint(api, url_prefix="/api")
+    demo_state = create_initial_state()
 
     @app.get("/")
     def command_center():
@@ -32,6 +39,43 @@ def create_app():
     @app.errorhandler(405)
     def method_not_allowed(_error):
         return jsonify({"error": "Method not allowed"}), 405
+
+    @app.get("/api/demo/state")
+    def demo_state_view():
+        return jsonify(demo_state), 200
+
+    @app.post("/api/demo/reset")
+    def demo_reset():
+        demo_state.clear()
+        demo_state.update(create_initial_state())
+        return jsonify(demo_state), 200
+
+    @app.post("/api/demo/step")
+    def demo_step():
+        container_id = "IH-C-1847"
+
+        status = demo_state["containers"][container_id]["status"]
+
+        if status == "ON_VESSEL":
+            discharge_container(
+                demo_state,
+                container_id,
+                "TT-17",
+            )
+
+        elif status == "ON_TRUCK":
+            start_truck_transit(
+                demo_state,
+                container_id,
+            )
+
+        elif status == "IN_TRANSIT":
+            place_container_in_yard(
+                demo_state,
+                container_id,
+            )
+
+        return jsonify(demo_state), 200
 
     return app
 

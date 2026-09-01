@@ -193,16 +193,16 @@
                                 <h3>Vessel Discharge</h3>
                             </div>
 
-                            <strong class="progress-value">51%</strong>
+                            <strong class="progress-value" id="progressPercent">51%</strong>
                         </div>
 
                         <div class="progress-track">
-                            <div class="progress-fill"></div>
+                            <div class="progress-fill" id="progressBar"></div>
                         </div>
 
                         <div class="progress-details">
-                            <span>1,257 discharged</span>
-                            <span>1,193 remaining</span>
+                            <span id="progressDischarged">1,257 discharged</span>
+                            <span id="progressRemaining">1,193 remaining</span>
                         </div>
                     </article>
 
@@ -292,7 +292,7 @@
                                     <td>QC-02</td>
                                     <td>TT-17</td>
                                     <td>Block C / 08 / 14</td>
-                                    <td><span class="status-pill working-pill">Discharging</span></td>
+                                    <td><span class="status-pill working-pill" id="containerStatus">Discharging</span></td>
                                 </tr>
 
                                 <tr>
@@ -325,7 +325,7 @@
                         </div>
                     </div>
 
-                    <div class="event-feed" id="eventFeed">
+                    <div class="event-feed" id="simulationEvents">
                         <div class="event-item">
                             <span class="event-icon">✓</span>
                             <div>
