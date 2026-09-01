@@ -21,6 +21,10 @@ def create_app():
     def operator_screen():
         return render_template("operator.html")
 
+    @app.get("/demo")
+    def live_terminal_demo():
+        return render_template("demo/vessel_operations.html")
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404

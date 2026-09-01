@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronHook | Vessel Operations</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">◫ Overview</a>
+                <a href="#" class="nav-item active">▦ Vessel Operations</a>
+                <a href="#" class="nav-item">▤ Yard Map</a>
+                <a href="#" class="nav-item">□ Containers</a>
+                <a href="#" class="nav-item">⌁ Equipment</a>
+                <a href="#" class="nav-item">▣ Trucks</a>
+                <a href="#" class="nav-item">♙ Workforce</a>
+                <a href="#" class="nav-item">✓ Assignments</a>
+                <a href="#" class="nav-item">⇄ Gate Activity</a>
+                <a href="#" class="nav-item">! Alerts</a>
+                <a href="#" class="nav-item">↗ Analytics</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+                <div class="demo-label">SIMULATED DATA</div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">IRONHOOK LIVE TERMINAL</p>
+                    <h2>Vessel Operations</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Terminal Operational
+                    </div>
+
+                    <button class="start-button" id="startSimulation">
+                        ▶ Start Simulation
+                    </button>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Interactive Product Demonstration
+                <span>Simulated Data</span>
+            </section>
+
+            <section class="vessel-header">
+                <div>
+                    <p class="eyebrow">ACTIVE VESSEL</p>
+                    <h3>IRONHOOK HORIZON</h3>
+
+                    <div class="vessel-meta">
+                        <span>Berth 02</span>
+                        <span>Discharge Operation</span>
+                        <span>ETA 05:30</span>
+                    </div>
+                </div>
+
+                <div class="operation-badge">
+                    <span class="pulse-dot"></span>
+                    DISCHARGING
+                </div>
+            </section>
+
+            <section class="metric-grid">
+                <article class="metric-card">
+                    <span class="metric-label">Total Containers</span>
+                    <strong id="totalContainers">2,450</strong>
+                    <small>Vessel discharge plan</small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">Discharged</span>
+                    <strong id="dischargedContainers">1,257</strong>
+                    <small>51.3% complete</small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">Remaining</span>
+                    <strong id="remainingContainers">1,193</strong>
+                    <small>Containers onboard</small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">Active Cranes</span>
+                    <strong>4</strong>
+                    <small>QC-01 through QC-04</small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">Moves / Hour</span>
+                    <strong id="movesPerHour">118</strong>
+                    <small>Current production rate</small>
+                </article>
+            </section>
+
+            <section class="operations-layout">
+
+                <article class="panel vessel-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">VESSEL BAY PLAN</p>
+                            <h3>Top-Down Vessel Operations</h3>
+                        </div>
+
+                        <div class="legend">
+                            <span><i class="legend-color discharged"></i> Discharged</span>
+                            <span><i class="legend-color working"></i> Working</span>
+                            <span><i class="legend-color waiting"></i> Waiting</span>
+                            <span><i class="legend-color hold"></i> Hold</span>
+                        </div>
+                    </div>
+
+                    <div class="vessel-stage">
+                        <div class="water-grid"></div>
+
+                        <div class="vessel">
+                            <div class="ship-bow">
+                                <span>IRONHOOK HORIZON</span>
+                            </div>
+
+                            <div class="ship-deck">
+                                {% for bay in [2,4,6,8,10,12,14,16] %}
+                                <div class="bay-column">
+                                    <div class="bay-label">BAY {{ "%02d"|format(bay) }}</div>
+
+                                    {% if bay in [4,8,12,16] %}
+                                    <div class="crane">
+                                        <div class="crane-arm"></div>
+                                        <div class="crane-body">QC-{{ "%02d"|format(loop.index // 2 + 1) }}</div>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="container-stack
+                                        {% if bay == 2 %}
+                                            discharged-stack
+                                        {% elif bay in [4,8,12,16] %}
+                                            working-stack
+                                        {% elif bay == 6 %}
+                                            mixed-stack
+                                        {% else %}
+                                            waiting-stack
+                                        {% endif %}
+                                    ">
+                                        <span></span><span></span><span></span>
+                                        <span></span><span></span><span></span>
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="ship-stern">
+                                <span>BERTH 02</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <aside class="right-column">
+
+                    <article class="panel">
+                        <div class="panel-header compact">
+                            <div>
+                                <p class="eyebrow">OPERATION PROGRESS</p>
+                                <h3>Vessel Discharge</h3>
+                            </div>
+
+                            <strong class="progress-value">51%</strong>
+                        </div>
+
+                        <div class="progress-track">
+                            <div class="progress-fill"></div>
+                        </div>
+
+                        <div class="progress-details">
+                            <span>1,257 discharged</span>
+                            <span>1,193 remaining</span>
+                        </div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-header compact">
+                            <div>
+                                <p class="eyebrow">CRANE PERFORMANCE</p>
+                                <h3>Active Quay Cranes</h3>
+                            </div>
+                        </div>
+
+                        <div class="crane-list">
+                            <div class="crane-row">
+                                <div><strong>QC-01</strong><span>Bay 04</span></div>
+                                <strong>31 MPH</strong>
+                            </div>
+
+                            <div class="crane-row">
+                                <div><strong>QC-02</strong><span>Bay 08</span></div>
+                                <strong>29 MPH</strong>
+                            </div>
+
+                            <div class="crane-row">
+                                <div><strong>QC-03</strong><span>Bay 12</span></div>
+                                <strong>28 MPH</strong>
+                            </div>
+
+                            <div class="crane-row">
+                                <div><strong>QC-04</strong><span>Bay 16</span></div>
+                                <strong>30 MPH</strong>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="panel alert-panel">
+                        <div class="panel-header compact">
+                            <div>
+                                <p class="eyebrow">OPERATIONAL ALERTS</p>
+                                <h3>Current Alerts</h3>
+                            </div>
+
+                            <span class="alert-count">2</span>
+                        </div>
+
+                        <div class="alert-item warning">
+                            <strong>Bay 14 Delay</strong>
+                            <span>Truck queue exceeding target dwell time.</span>
+                        </div>
+
+                        <div class="alert-item info">
+                            <strong>QC-03 Inspection</strong>
+                            <span>Routine inspection due after current shift.</span>
+                        </div>
+                    </article>
+
+                </aside>
+
+            </section>
+
+            <section class="bottom-grid">
+
+                <article class="panel">
+                    <div class="panel-header compact">
+                        <div>
+                            <p class="eyebrow">CONTAINER PLAN</p>
+                            <h3>Active Moves</h3>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Container</th>
+                                    <th>Bay</th>
+                                    <th>Crane</th>
+                                    <th>Truck</th>
+                                    <th>Destination</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <td>IH-C-1847</td>
+                                    <td>08 / 12 / 05</td>
+                                    <td>QC-02</td>
+                                    <td>TT-17</td>
+                                    <td>Block C / 08 / 14</td>
+                                    <td><span class="status-pill working-pill">Discharging</span></td>
+                                </tr>
+
+                                <tr>
+                                    <td>IH-C-2318</td>
+                                    <td>04 / 07 / 03</td>
+                                    <td>QC-01</td>
+                                    <td>TT-09</td>
+                                    <td>Block A / 03 / 09</td>
+                                    <td><span class="status-pill transit-pill">On Truck</span></td>
+                                </tr>
+
+                                <tr>
+                                    <td>IH-C-2014</td>
+                                    <td>12 / 02 / 04</td>
+                                    <td>QC-03</td>
+                                    <td>TT-22</td>
+                                    <td>Block D / 11 / 06</td>
+                                    <td><span class="status-pill waiting-pill">Awaiting Move</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header compact">
+                        <div>
+                            <p class="eyebrow">RECENT EVENTS</p>
+                            <h3>Terminal Activity</h3>
+                        </div>
+                    </div>
+
+                    <div class="event-feed" id="eventFeed">
+                        <div class="event-item">
+                            <span class="event-icon">✓</span>
+                            <div>
+                                <strong>Container IH-C-1842 discharged</strong>
+                                <span>QC-02 → TT-17</span>
+                            </div>
+                        </div>
+
+                        <div class="event-item">
+                            <span class="event-icon">↗</span>
+                            <div>
+                                <strong>TT-09 departed vessel apron</strong>
+                                <span>Destination Block A</span>
+                            </div>
+                        </div>
+
+                        <div class="event-item">
+                            <span class="event-icon">▦</span>
+                            <div>
+                                <strong>QC-01 completed move 412</strong>
+                                <span>Bay 04</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/vessel_operations.js') }}"
+    ></script>
+</body>
+</html>
