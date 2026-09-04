@@ -128,6 +128,17 @@ def place_container_in_yard(state, container_id):
     return state
 
 
+def get_container_history(state, container_id):
+    if container_id not in state["containers"]:
+        raise ValueError(f"Unknown container: {container_id}")
+
+    return [
+        event
+        for event in state["events"]
+        if event.get("container_id") == container_id
+    ]
+
+
 def advance_simulation(state):
     actions = []
 

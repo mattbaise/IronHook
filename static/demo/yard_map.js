@@ -285,7 +285,43 @@ function renderTruckActivity(trucks) {
     );
 }
 
-function showContainerDetails(containerId, containers) {
+async function fetchContainerHistory(containerId) {
+    const response = await fetch(
+        `/api/demo/containers/${containerId}/history`
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to load container history");
+    }
+
+    return response.json();
+}
+
+function formatEventType(type) {
+    const labels = {
+        CONTAINER_DISCHARGED: "Discharged from vessel",
+        CONTAINER_IN_TRANSIT: "Entered terminal transit",
+        CONTAINER_PLACED_IN_YARD: "Placed in yard",
+    };
+
+    return labels[type] || formatStatus(type);
+}
+
+function formatEventTime(timestamp) {
+    const value = new Date(timestamp);
+
+    return value.toLocaleTimeString(
+        [],
+        {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        }
+    );
+}
+
+
+async function showContainerDetails(containerId, containers) {
     const result = document.getElementById(
         "yardSearchResult"
     );
@@ -308,6 +344,17 @@ function showContainerDetails(containerId, containers) {
 
     const destination =
         parseYardDestination(container.destination);
+
+    let history = [];
+
+    try {
+        const historyResponse =
+            await fetchContainerHistory(containerId);
+
+        history = historyResponse.history;
+    } catch (error) {
+        console.error(error);
+    }
 
     const status = container.status;
 
@@ -450,6 +497,53 @@ function showContainerDetails(containerId, containers) {
                 </div>
             </div>
 
+        </div>
+
+        <div class="movement-history">
+            <div class="movement-history-header">
+                <span>CONTAINER MOVEMENT HISTORY</span>
+                <strong>${history.length} Events</strong>
+            </div>
+
+            <div class="movement-history-list">
+                ${
+                    history.length === 0
+                        ? `
+                            <div class="movement-history-empty">
+                                No movement events recorded yet.
+                            </div>
+                        `
+                        : history.map((event) => `
+                            <div class="movement-history-event">
+                                <div class="movement-history-time">
+                                    ${formatEventTime(event.timestamp)}
+                                </div>
+
+                                <div class="movement-history-marker"></div>
+
+                                <div class="movement-history-content">
+                                    <strong>
+                                        ${formatEventType(event.type)}
+                                    </strong>
+
+                                    <span>
+                                        ${
+                                            event.crane_id
+                                                ? `${event.crane_id} · `
+                                                : ""
+                                        }
+                                        ${
+                                            event.truck_id
+                                                ? `${event.truck_id} · `
+                                                : ""
+                                        }
+                                        ${event.destination || ""}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join("")
+                }
+            </div>
         </div>
     `;
 }

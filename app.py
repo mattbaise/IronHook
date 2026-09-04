@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
 
 from routes import api
-from simulation.events import advance_simulation
+from simulation.events import advance_simulation, get_container_history
 from simulation.vessel_state import create_initial_state
 
 
@@ -43,6 +43,31 @@ def create_app():
     @app.get("/api/demo/state")
     def demo_state_view():
         return jsonify(demo_state), 200
+
+    @app.get("/api/demo/containers/<container_id>/history")
+    def demo_container_history(container_id):
+        if container_id not in demo_state["containers"]:
+            return jsonify(
+                {
+                    "error": "Container not found",
+                    "container_id": container_id,
+                }
+            ), 404
+
+        history = get_container_history(
+            demo_state,
+            container_id,
+        )
+
+        return jsonify(
+            {
+                "container_id": container_id,
+                "current_status": demo_state["containers"][
+                    container_id
+                ]["status"],
+                "history": history,
+            }
+        ), 200
 
     @app.post("/api/demo/reset")
     def demo_reset():

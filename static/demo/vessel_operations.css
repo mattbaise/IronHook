@@ -1591,3 +1591,90 @@ button.yard-list-item {
         margin-left: 22px;
     }
 }
+
+/* ---------------------------------------------------------
+   Container Movement History
+--------------------------------------------------------- */
+
+.movement-history {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.movement-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.movement-history-header span {
+    color: var(--muted-text);
+    font-size: 9px;
+    letter-spacing: 0.11em;
+}
+
+.movement-history-header strong {
+    color: #7fd8ff;
+    font-size: 10px;
+}
+
+.movement-history-list {
+    display: grid;
+    gap: 8px;
+}
+
+.movement-history-event {
+    display: grid;
+    grid-template-columns: 64px 12px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+}
+
+.movement-history-time {
+    padding-top: 2px;
+    color: var(--muted-text);
+    font-size: 9px;
+}
+
+.movement-history-marker {
+    width: 7px;
+    height: 7px;
+    margin-top: 4px;
+    border-radius: 50%;
+    background: #43d17a;
+    box-shadow: 0 0 10px rgba(67, 209, 122, 0.25);
+}
+
+.movement-history-content {
+    min-width: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.movement-history-content strong,
+.movement-history-content span {
+    display: block;
+}
+
+.movement-history-content strong {
+    color: #fff;
+    font-size: 10px;
+}
+
+.movement-history-content span {
+    margin-top: 3px;
+    color: var(--muted-text);
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+.movement-history-empty {
+    padding: 10px;
+    border-radius: 7px;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    color: var(--muted-text);
+    font-size: 10px;
+}
