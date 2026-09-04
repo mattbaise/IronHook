@@ -107,71 +107,94 @@ function updateDashboard(state) {
     }
 
     updateContainerTable(state.containers);
+    updateCranePerformance(state.cranes);
     updateEventFeed(state.events);
 }
 
 
+function getStatusClass(status) {
+    if (status === "IN_YARD") {
+        return "success-pill";
+    }
+
+    if (status === "IN_TRANSIT") {
+        return "warning-pill";
+    }
+
+    if (status === "ON_TRUCK") {
+        return "transit-pill";
+    }
+
+    return "working-pill";
+}
+
+
 function updateContainerTable(containers) {
-    const rows = document.querySelectorAll("tbody tr");
+    const tableBody =
+        document.getElementById("containerTableBody");
 
-    rows.forEach((row) => {
-        const cells = row.querySelectorAll("td");
+    if (!tableBody) {
+        return;
+    }
 
-        if (cells.length < 6) {
-            return;
+    tableBody.innerHTML = "";
+
+    Object.entries(containers).forEach(
+        ([containerId, container]) => {
+            const row =
+                document.createElement("tr");
+
+            const bayPosition =
+                `${container.bay} / ${container.row} / ${container.tier}`;
+
+            const truck =
+                container.truck || "—";
+
+            row.innerHTML = `
+                <td>${containerId}</td>
+                <td>${bayPosition}</td>
+                <td>${container.crane}</td>
+                <td>${truck}</td>
+                <td>${container.destination}</td>
+                <td>
+                    <span class="status-pill ${getStatusClass(container.status)}">
+                        ${formatStatus(container.status)}
+                    </span>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
         }
+    );
+}
 
-        const containerId =
-            cells[0].textContent.trim();
 
-        const container =
-            containers[containerId];
+function updateCranePerformance(cranes) {
+    const craneElements = {
+        "QC-01": document.getElementById("craneMovesQC01"),
+        "QC-02": document.getElementById("craneMovesQC02"),
+        "QC-03": document.getElementById("craneMovesQC03"),
+        "QC-04": document.getElementById("craneMovesQC04"),
+    };
 
-        if (!container) {
-            return;
+    Object.entries(cranes).forEach(
+        ([craneId, crane]) => {
+            const element =
+                craneElements[craneId];
+
+            if (!element) {
+                return;
+            }
+
+            const moveLabel =
+                crane.moves === 1
+                    ? "move"
+                    : "moves";
+
+            element.textContent =
+                `${crane.moves} ${moveLabel}`;
         }
-
-        cells[2].textContent =
-            container.crane || "—";
-
-        cells[3].textContent =
-            container.truck || "—";
-
-        const statusPill =
-            cells[5].querySelector(".status-pill");
-
-        if (!statusPill) {
-            return;
-        }
-
-        statusPill.textContent =
-            formatStatus(container.status);
-
-        statusPill.classList.remove(
-            "working-pill",
-            "success-pill",
-            "warning-pill",
-            "danger-pill"
-        );
-
-        if (container.status === "IN_YARD") {
-            statusPill.classList.add(
-                "success-pill"
-            );
-
-        } else if (
-            container.status === "IN_TRANSIT"
-        ) {
-            statusPill.classList.add(
-                "warning-pill"
-            );
-
-        } else {
-            statusPill.classList.add(
-                "working-pill"
-            );
-        }
-    });
+    );
 }
 
 

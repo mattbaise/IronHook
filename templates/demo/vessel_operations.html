@@ -217,22 +217,22 @@
                         <div class="crane-list">
                             <div class="crane-row">
                                 <div><strong>QC-01</strong><span>Bay 04</span></div>
-                                <strong>31 MPH</strong>
+                                <strong id="craneMovesQC01">0 moves</strong>
                             </div>
 
                             <div class="crane-row">
                                 <div><strong>QC-02</strong><span>Bay 08</span></div>
-                                <strong>29 MPH</strong>
+                                <strong id="craneMovesQC02">0 moves</strong>
                             </div>
 
                             <div class="crane-row">
                                 <div><strong>QC-03</strong><span>Bay 12</span></div>
-                                <strong>28 MPH</strong>
+                                <strong id="craneMovesQC03">0 moves</strong>
                             </div>
 
                             <div class="crane-row">
                                 <div><strong>QC-04</strong><span>Bay 16</span></div>
-                                <strong>30 MPH</strong>
+                                <strong id="craneMovesQC04">0 moves</strong>
                             </div>
                         </div>
                     </article>
@@ -285,33 +285,7 @@
                                 </tr>
                             </thead>
 
-                            <tbody>
-                                <tr>
-                                    <td>IH-C-1847</td>
-                                    <td>08 / 12 / 05</td>
-                                    <td>QC-02</td>
-                                    <td>TT-17</td>
-                                    <td>Block C / 08 / 14</td>
-                                    <td><span class="status-pill working-pill" id="containerStatus">Discharging</span></td>
-                                </tr>
-
-                                <tr>
-                                    <td>IH-C-2318</td>
-                                    <td>04 / 07 / 03</td>
-                                    <td>QC-01</td>
-                                    <td>TT-09</td>
-                                    <td>Block A / 03 / 09</td>
-                                    <td><span class="status-pill transit-pill">On Truck</span></td>
-                                </tr>
-
-                                <tr>
-                                    <td>IH-C-2014</td>
-                                    <td>12 / 02 / 04</td>
-                                    <td>QC-03</td>
-                                    <td>TT-22</td>
-                                    <td>Block D / 11 / 06</td>
-                                    <td><span class="status-pill waiting-pill">Awaiting Move</span></td>
-                                </tr>
+                            <tbody id="containerTableBody">
                             </tbody>
                         </table>
                     </div>
