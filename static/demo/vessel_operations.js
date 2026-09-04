@@ -108,6 +108,8 @@ function updateDashboard(state) {
 
     updateContainerTable(state.containers);
     updateCranePerformance(state.cranes);
+    updateVesselBayPlan(state.containers);
+    updateTruckOperations(state.trucks);
     updateEventFeed(state.events);
 }
 
@@ -195,6 +197,147 @@ function updateCranePerformance(cranes) {
                 `${crane.moves} ${moveLabel}`;
         }
     );
+}
+
+
+function updateVesselBayPlan(containers) {
+    const activeBays = ["04", "08", "12", "16"];
+
+    activeBays.forEach((bay) => {
+        const stack =
+            document.getElementById(`bayStack${bay}`);
+
+        if (!stack) {
+            return;
+        }
+
+        const bayContainers =
+            Object.values(containers).filter(
+                (container) => container.bay === bay
+            );
+
+        const stillOnVessel =
+            bayContainers.filter(
+                (container) =>
+                    container.status === "ON_VESSEL"
+            ).length;
+
+        const blocks =
+            Array.from(stack.querySelectorAll("span"));
+
+        const totalContainers =
+            bayContainers.length;
+
+        let visibleBlocks = 0;
+
+        if (totalContainers > 0) {
+            visibleBlocks = Math.round(
+                (stillOnVessel / totalContainers)
+                * blocks.length
+            );
+        }
+
+        blocks.forEach((block, index) => {
+            if (index < visibleBlocks) {
+                block.style.opacity = "1";
+                block.style.transform = "scale(1)";
+            } else {
+                block.style.opacity = "0.08";
+                block.style.transform = "scale(0.82)";
+            }
+
+            block.style.transition =
+                "opacity 0.45s ease, transform 0.45s ease";
+        });
+
+        stack.classList.remove(
+            "working-stack",
+            "discharged-stack"
+        );
+
+        if (stillOnVessel === 0) {
+            stack.classList.add(
+                "discharged-stack"
+            );
+        } else {
+            stack.classList.add(
+                "working-stack"
+            );
+        }
+    });
+}
+
+
+function updateTruckOperations(trucks) {
+    const fleet =
+        document.getElementById("truckFleet");
+
+    if (!fleet) {
+        return;
+    }
+
+    fleet.innerHTML = "";
+
+    let availableCount = 0;
+    let activeCount = 0;
+
+    Object.entries(trucks).forEach(
+        ([truckId, truck]) => {
+            const unit =
+                document.createElement("div");
+
+            const status =
+                truck.status || "AVAILABLE";
+
+            if (status === "AVAILABLE") {
+                availableCount += 1;
+            } else {
+                activeCount += 1;
+            }
+
+            const statusClass =
+                status.toLowerCase().replace("_", "-");
+
+            unit.className =
+                `truck-unit ${statusClass}`;
+
+            const assignment =
+                truck.container
+                    ? truck.container
+                    : truck.driver;
+
+            unit.innerHTML = `
+                <div class="truck-icon"></div>
+                <strong>${truckId}</strong>
+                <small>${assignment}</small>
+                <span class="truck-status">
+                    ${formatStatus(status)}
+                </span>
+            `;
+
+            fleet.appendChild(unit);
+        }
+    );
+
+    const availableElement =
+        document.getElementById(
+            "availableTruckCount"
+        );
+
+    const activeElement =
+        document.getElementById(
+            "activeTruckCount"
+        );
+
+    if (availableElement) {
+        availableElement.textContent =
+            availableCount;
+    }
+
+    if (activeElement) {
+        activeElement.textContent =
+            activeCount;
+    }
 }
 
 
