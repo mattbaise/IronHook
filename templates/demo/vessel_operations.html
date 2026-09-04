@@ -147,28 +147,45 @@
                             </div>
 
                             <div class="ship-deck">
-                                {% for bay in [2,4,6,8,10,12,14,16] %}
-                                <div class="bay-column">
-                                    <div class="bay-label">BAY {{ "%02d"|format(bay) }}</div>
+                                {% set crane_map = {
+                                    4: "QC-01",
+                                    8: "QC-02",
+                                    12: "QC-03",
+                                    16: "QC-04"
+                                } %}
 
-                                    {% if bay in [4,8,12,16] %}
+                                {% for bay in [2,4,6,8,10,12,14,16] %}
+                                <div
+                                    class="bay-column"
+                                    data-bay="{{ '%02d'|format(bay) }}"
+                                >
+                                    <div class="bay-label">
+                                        BAY {{ "%02d"|format(bay) }}
+                                    </div>
+
+                                    {% if bay in crane_map %}
                                     <div class="crane">
                                         <div class="crane-arm"></div>
-                                        <div class="crane-body">QC-{{ "%02d"|format(loop.index // 2 + 1) }}</div>
+                                        <div class="crane-body">
+                                            {{ crane_map[bay] }}
+                                        </div>
                                     </div>
                                     {% endif %}
 
-                                    <div class="container-stack
+                                    <div
+                                        id="bayStack{{ '%02d'|format(bay) }}"
+                                        class="container-stack
                                         {% if bay == 2 %}
                                             discharged-stack
-                                        {% elif bay in [4,8,12,16] %}
+                                        {% elif bay in crane_map %}
                                             working-stack
                                         {% elif bay == 6 %}
                                             mixed-stack
                                         {% else %}
                                             waiting-stack
                                         {% endif %}
-                                    ">
+                                        "
+                                    >
                                         <span></span><span></span><span></span>
                                         <span></span><span></span><span></span>
                                         <span></span><span></span><span></span>
