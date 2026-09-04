@@ -47,37 +47,34 @@ async function resetSimulation() {
 }
 
 
+function formatStatus(status) {
+    return status
+        .replaceAll("_", " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+
 function updateDashboard(state) {
     const vessel = state.vessel;
-    const container = state.containers["IH-C-1847"];
 
-    const discharged = document.getElementById(
-        "dischargedContainers"
-    );
+    const discharged =
+        document.getElementById("dischargedContainers");
 
-    const remaining = document.getElementById(
-        "remainingContainers"
-    );
+    const remaining =
+        document.getElementById("remainingContainers");
 
-    const progressPercent = document.getElementById(
-        "progressPercent"
-    );
+    const progressPercent =
+        document.getElementById("progressPercent");
 
-    const progressBar = document.getElementById(
-        "progressBar"
-    );
+    const progressBar =
+        document.getElementById("progressBar");
 
-    const progressDischarged = document.getElementById(
-        "progressDischarged"
-    );
+    const progressDischarged =
+        document.getElementById("progressDischarged");
 
-    const progressRemaining = document.getElementById(
-        "progressRemaining"
-    );
-
-    const containerStatus = document.getElementById(
-        "containerStatus"
-    );
+    const progressRemaining =
+        document.getElementById("progressRemaining");
 
     if (discharged) {
         discharged.textContent =
@@ -109,19 +106,78 @@ function updateDashboard(state) {
             `${vessel.remaining.toLocaleString()} remaining`;
     }
 
-    if (containerStatus) {
-        containerStatus.textContent =
-            container.status.replaceAll("_", " ");
-    }
-
+    updateContainerTable(state.containers);
     updateEventFeed(state.events);
 }
 
 
+function updateContainerTable(containers) {
+    const rows = document.querySelectorAll("tbody tr");
+
+    rows.forEach((row) => {
+        const cells = row.querySelectorAll("td");
+
+        if (cells.length < 6) {
+            return;
+        }
+
+        const containerId =
+            cells[0].textContent.trim();
+
+        const container =
+            containers[containerId];
+
+        if (!container) {
+            return;
+        }
+
+        cells[2].textContent =
+            container.crane || "—";
+
+        cells[3].textContent =
+            container.truck || "—";
+
+        const statusPill =
+            cells[5].querySelector(".status-pill");
+
+        if (!statusPill) {
+            return;
+        }
+
+        statusPill.textContent =
+            formatStatus(container.status);
+
+        statusPill.classList.remove(
+            "working-pill",
+            "success-pill",
+            "warning-pill",
+            "danger-pill"
+        );
+
+        if (container.status === "IN_YARD") {
+            statusPill.classList.add(
+                "success-pill"
+            );
+
+        } else if (
+            container.status === "IN_TRANSIT"
+        ) {
+            statusPill.classList.add(
+                "warning-pill"
+            );
+
+        } else {
+            statusPill.classList.add(
+                "working-pill"
+            );
+        }
+    });
+}
+
+
 function updateEventFeed(events) {
-    const feed = document.getElementById(
-        "simulationEvents"
-    );
+    const feed =
+        document.getElementById("simulationEvents");
 
     if (!feed) {
         return;
@@ -145,12 +201,21 @@ function updateEventFeed(events) {
 
     [...events]
         .reverse()
-        .slice(0, 5)
+        .slice(0, 8)
         .forEach((event) => {
             const item =
                 document.createElement("div");
 
             item.className = "event-item";
+
+            const icon =
+                document.createElement("span");
+
+            icon.className = "event-icon";
+            icon.textContent = "✓";
+
+            const content =
+                document.createElement("div");
 
             const title =
                 document.createElement("strong");
@@ -161,26 +226,40 @@ function updateEventFeed(events) {
             const detail =
                 document.createElement("span");
 
-            detail.textContent =
-                `${event.container_id} • ${event.truck_id}`;
+            let detailText =
+                event.container_id || "";
 
-            const content =
-                document.createElement("div");
+            if (event.crane_id) {
+                detailText +=
+                    ` • ${event.crane_id}`;
+            }
+
+            if (event.truck_id) {
+                detailText +=
+                    ` → ${event.truck_id}`;
+            }
+
+            detail.textContent =
+                detailText;
 
             content.appendChild(title);
             content.appendChild(detail);
-
-            const icon =
-                document.createElement("span");
-
-            icon.className = "event-icon";
-            icon.textContent = "✓";
 
             item.appendChild(icon);
             item.appendChild(content);
 
             feed.appendChild(item);
         });
+}
+
+
+function simulationComplete(state) {
+    return Object.values(
+        state.containers
+    ).every(
+        (container) =>
+            container.status === "IN_YARD"
+    );
 }
 
 
@@ -194,26 +273,33 @@ async function runSimulation() {
         "● Simulation Running";
 
     try {
-        let state = await resetSimulation();
+        let state =
+            await resetSimulation();
+
         updateDashboard(state);
 
-        await sleep(1000);
+        await sleep(800);
 
-        state = await stepSimulation();
-        updateDashboard(state);
+        while (!simulationComplete(state)) {
+            const response =
+                await stepSimulation();
 
-        await sleep(1500);
+            state = response.state;
 
-        state = await stepSimulation();
-        updateDashboard(state);
+            updateDashboard(state);
 
-        await sleep(1500);
-
-        state = await stepSimulation();
-        updateDashboard(state);
+            await sleep(1200);
+        }
 
         startButton.textContent =
             "✓ Simulation Complete";
+
+        await sleep(1000);
+
+        startButton.textContent =
+            "Run Simulation Again";
+
+        startButton.disabled = false;
 
     } catch (error) {
         console.error(error);

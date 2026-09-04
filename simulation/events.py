@@ -1,6 +1,26 @@
 from datetime import datetime
 
 
+def _timestamp():
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def get_next_container(state):
+    for container_id, container in state["containers"].items():
+        if container["status"] == "ON_VESSEL":
+            return container_id
+
+    return None
+
+
+def get_available_truck(state):
+    for truck_id, truck in state["trucks"].items():
+        if truck["status"] == "AVAILABLE":
+            return truck_id
+
+    return None
+
+
 def discharge_container(state, container_id, truck_id):
     container = state["containers"][container_id]
     crane_id = container["crane"]
@@ -39,9 +59,7 @@ def discharge_container(state, container_id, truck_id):
     state["events"].append(
         {
             "type": "CONTAINER_DISCHARGED",
-            "timestamp": datetime.now().isoformat(
-                timespec="seconds"
-            ),
+            "timestamp": _timestamp(),
             "container_id": container_id,
             "crane_id": crane_id,
             "truck_id": truck_id,
@@ -70,9 +88,7 @@ def start_truck_transit(state, container_id):
     state["events"].append(
         {
             "type": "CONTAINER_IN_TRANSIT",
-            "timestamp": datetime.now().isoformat(
-                timespec="seconds"
-            ),
+            "timestamp": _timestamp(),
             "container_id": container_id,
             "truck_id": truck_id,
             "destination": container["destination"],
@@ -102,9 +118,7 @@ def place_container_in_yard(state, container_id):
     state["events"].append(
         {
             "type": "CONTAINER_PLACED_IN_YARD",
-            "timestamp": datetime.now().isoformat(
-                timespec="seconds"
-            ),
+            "timestamp": _timestamp(),
             "container_id": container_id,
             "truck_id": truck_id,
             "destination": container["destination"],
@@ -112,3 +126,93 @@ def place_container_in_yard(state, container_id):
     )
 
     return state
+
+
+def advance_simulation(state):
+    actions = []
+
+    # 1. Containers already traveling reach the yard.
+    in_transit = [
+        container_id
+        for container_id, container in state["containers"].items()
+        if container["status"] == "IN_TRANSIT"
+    ]
+
+    for container_id in in_transit:
+        place_container_in_yard(
+            state,
+            container_id,
+        )
+
+        actions.append(
+            {
+                "action": "PLACED_IN_YARD",
+                "container_id": container_id,
+            }
+        )
+
+    # 2. Containers already on trucks leave the vessel apron.
+    on_truck = [
+        container_id
+        for container_id, container in state["containers"].items()
+        if container["status"] == "ON_TRUCK"
+    ]
+
+    for container_id in on_truck:
+        start_truck_transit(
+            state,
+            container_id,
+        )
+
+        actions.append(
+            {
+                "action": "STARTED_TRANSIT",
+                "container_id": container_id,
+            }
+        )
+
+    # 3. Each crane may discharge one new container this tick.
+    for crane_id in state["cranes"]:
+        container_id = None
+
+        for candidate_id, container in state["containers"].items():
+            if (
+                container["status"] == "ON_VESSEL"
+                and container["crane"] == crane_id
+            ):
+                container_id = candidate_id
+                break
+
+        if container_id is None:
+            continue
+
+        truck_id = get_available_truck(state)
+
+        if truck_id is None:
+            break
+
+        discharge_container(
+            state,
+            container_id,
+            truck_id,
+        )
+
+        actions.append(
+            {
+                "action": "DISCHARGED",
+                "container_id": container_id,
+                "truck_id": truck_id,
+                "crane_id": crane_id,
+            }
+        )
+
+    if not actions:
+        return {
+            "action": "IDLE",
+            "actions": [],
+        }
+
+    return {
+        "action": "TICK",
+        "actions": actions,
+    }

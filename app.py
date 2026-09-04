@@ -4,11 +4,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
 
 from routes import api
-from simulation.events import (
-    discharge_container,
-    place_container_in_yard,
-    start_truck_transit,
-)
+from simulation.events import advance_simulation
 from simulation.vessel_state import create_initial_state
 
 
@@ -52,30 +48,14 @@ def create_app():
 
     @app.post("/api/demo/step")
     def demo_step():
-        container_id = "IH-C-1847"
+        result = advance_simulation(demo_state)
 
-        status = demo_state["containers"][container_id]["status"]
-
-        if status == "ON_VESSEL":
-            discharge_container(
-                demo_state,
-                container_id,
-                "TT-17",
-            )
-
-        elif status == "ON_TRUCK":
-            start_truck_transit(
-                demo_state,
-                container_id,
-            )
-
-        elif status == "IN_TRANSIT":
-            place_container_in_yard(
-                demo_state,
-                container_id,
-            )
-
-        return jsonify(demo_state), 200
+        return jsonify(
+            {
+                "result": result,
+                "state": demo_state,
+            }
+        ), 200
 
     return app
 
