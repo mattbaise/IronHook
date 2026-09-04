@@ -28,6 +28,10 @@ def create_app():
     def live_terminal_demo():
         return render_template("demo/vessel_operations.html")
 
+    @app.get("/demo/yard")
+    def yard_map_demo():
+        return render_template("demo/yard_map.html")
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404

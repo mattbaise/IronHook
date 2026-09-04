@@ -1022,3 +1022,420 @@ body,
 }
 
 
+
+/* ---------------------------------------------------------
+   Dedicated Yard Map
+--------------------------------------------------------- */
+
+.yard-dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.7fr);
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.yard-command-card,
+.yard-search-card {
+    min-width: 0;
+}
+
+.yard-status-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted-text);
+}
+
+.yard-status-legend span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot.occupied {
+    background: #43d17a;
+}
+
+.legend-dot.incoming {
+    background: #ffad45;
+}
+
+.legend-dot.open {
+    background: #536274;
+}
+
+.yard-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.yard-kpi {
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.yard-kpi span {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted-text);
+    margin-bottom: 6px;
+}
+
+.yard-kpi strong {
+    font-size: 24px;
+}
+
+.yard-search-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.yard-search-row input {
+    min-width: 0;
+    padding: 11px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(8, 16, 28, 0.9);
+    color: #fff;
+    outline: none;
+}
+
+.yard-search-row button {
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.yard-search-result {
+    margin-top: 12px;
+    min-height: 84px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--muted-text);
+    font-size: 13px;
+}
+
+.yard-trace-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.yard-trace-header strong {
+    color: #fff;
+}
+
+.yard-trace-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.yard-trace-grid div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.yard-trace-grid span {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.yard-trace-grid strong {
+    color: #fff;
+    font-size: 12px;
+}
+
+.full-yard-map-panel {
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+
+.yard-live-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--muted-text);
+}
+
+.yard-terminal-layout {
+    margin-top: 16px;
+}
+
+.yard-waterfront {
+    padding: 12px 16px;
+    border: 1px solid rgba(73, 196, 255, 0.18);
+    border-radius: 10px 10px 0 0;
+    background: rgba(34, 123, 170, 0.08);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #7fd8ff;
+}
+
+.yard-transfer-road {
+    min-height: 92px;
+    padding: 12px 14px;
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    background:
+        linear-gradient(
+            90deg,
+            transparent 49.5%,
+            rgba(255, 255, 255, 0.08) 50%,
+            transparent 50.5%
+        ),
+        rgba(255, 255, 255, 0.015);
+}
+
+.yard-transfer-road > span {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted-text);
+}
+
+.yard-truck-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    overflow-x: auto;
+}
+
+.yard-road-truck {
+    flex: 0 0 auto;
+    min-width: 108px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.yard-road-truck strong,
+.yard-road-truck span {
+    display: block;
+}
+
+.yard-road-truck strong {
+    font-size: 11px;
+}
+
+.yard-road-truck span {
+    margin-top: 2px;
+    font-size: 9px;
+    color: var(--muted-text);
+}
+
+.yard-road-truck.in_transit,
+.yard-road-truck.in-transit {
+    border-color: rgba(255, 173, 69, 0.4);
+}
+
+.yard-road-truck.assigned {
+    border-color: rgba(73, 196, 255, 0.4);
+}
+
+.yard-block-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 0 0 10px 10px;
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.yard-map-block {
+    min-width: 0;
+    padding: 12px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.yard-map-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.yard-map-block-header div {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+}
+
+.yard-map-block-header span {
+    font-size: 10px;
+    color: var(--muted-text);
+    letter-spacing: 0.08em;
+}
+
+.yard-map-block-header strong {
+    font-size: 20px;
+}
+
+.yard-map-slots {
+    display: grid;
+    gap: 8px;
+}
+
+.yard-map-slot {
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.025);
+    color: #fff;
+    cursor: pointer;
+}
+
+.yard-map-slot span,
+.yard-map-slot small {
+    display: block;
+    color: var(--muted-text);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+}
+
+.yard-map-slot strong {
+    display: block;
+    margin: 4px 0;
+    font-size: 11px;
+}
+
+.yard-map-slot.open {
+    opacity: 0.68;
+}
+
+.yard-map-slot.incoming {
+    border-color: rgba(255, 173, 69, 0.5);
+    background: rgba(255, 173, 69, 0.06);
+}
+
+.yard-map-slot.occupied {
+    border-color: rgba(67, 209, 122, 0.5);
+    background: rgba(67, 209, 122, 0.06);
+}
+
+.yard-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.yard-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.yard-list-item {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 11px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.02);
+    color: #fff;
+    text-align: left;
+}
+
+button.yard-list-item {
+    cursor: pointer;
+}
+
+.yard-list-item div {
+    min-width: 0;
+}
+
+.yard-list-item strong,
+.yard-list-item span {
+    display: block;
+}
+
+.yard-list-item strong {
+    font-size: 11px;
+}
+
+.yard-list-item span {
+    margin-top: 3px;
+    font-size: 9px;
+    color: var(--muted-text);
+}
+
+.yard-list-empty,
+.yard-alert-empty {
+    padding: 16px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.09);
+    color: var(--muted-text);
+    font-size: 12px;
+}
+
+.yard-alert-empty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.yard-alert-empty span {
+    color: #43d17a;
+}
+
+@media (max-width: 1100px) {
+    .yard-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .yard-block-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .yard-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .yard-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .yard-block-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .yard-trace-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronHook | Yard Map</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">◫ Overview</a>
+                <a href="/demo" class="nav-item">▦ Vessel Operations</a>
+                <a href="/demo/yard" class="nav-item active">▤ Yard Map</a>
+                <a href="#" class="nav-item">□ Containers</a>
+                <a href="#" class="nav-item">⌁ Equipment</a>
+                <a href="#" class="nav-item">▣ Trucks</a>
+                <a href="#" class="nav-item">♙ Workforce</a>
+                <a href="#" class="nav-item">✓ Assignments</a>
+                <a href="#" class="nav-item">⇄ Gate Activity</a>
+                <a href="#" class="nav-item">! Alerts</a>
+                <a href="#" class="nav-item">↗ Analytics</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+                <div class="demo-label">SIMULATED DATA</div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">IRONHOOK LIVE TERMINAL</p>
+                    <h2>Yard Map</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Terminal Operational
+                    </div>
+
+                    <button class="start-button" id="startSimulation">
+                        ▶ Start Simulation
+                    </button>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Interactive Product Demonstration
+                <span>Simulated Data</span>
+            </section>
+
+            <section class="yard-dashboard-grid">
+
+                <article class="panel yard-command-card">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">TERMINAL YARD</p>
+                            <h3>Live Yard Overview</h3>
+                        </div>
+
+                        <div class="yard-status-legend">
+                            <span><i class="legend-dot occupied"></i>Occupied</span>
+                            <span><i class="legend-dot incoming"></i>Incoming</span>
+                            <span><i class="legend-dot open"></i>Open</span>
+                        </div>
+                    </div>
+
+                    <div class="yard-kpi-grid">
+                        <div class="yard-kpi">
+                            <span>Total Slots</span>
+                            <strong id="yardTotalSlots">12</strong>
+                        </div>
+
+                        <div class="yard-kpi">
+                            <span>Occupied</span>
+                            <strong id="yardOccupiedCount">0</strong>
+                        </div>
+
+                        <div class="yard-kpi">
+                            <span>Incoming</span>
+                            <strong id="yardIncomingCount">0</strong>
+                        </div>
+
+                        <div class="yard-kpi">
+                            <span>Available</span>
+                            <strong id="yardAvailableCount">12</strong>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="panel yard-search-card">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">CONTAINER LOOKUP</p>
+                            <h3>Trace Container</h3>
+                        </div>
+                    </div>
+
+                    <div class="yard-search-row">
+                        <input
+                            id="yardContainerSearch"
+                            type="text"
+                            placeholder="Search container ID"
+                            autocomplete="off"
+                        >
+                        <button id="yardSearchButton">Search</button>
+                    </div>
+
+                    <div
+                        id="yardSearchResult"
+                        class="yard-search-result"
+                    >
+                        Select a container to view its current position and movement status.
+                    </div>
+                </article>
+
+            </section>
+
+            <section class="panel full-yard-map-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">LIVE STORAGE GRID</p>
+                        <h3>Terminal Yard Map</h3>
+                    </div>
+
+                    <div class="yard-live-status">
+                        <span class="status-dot"></span>
+                        Live Simulation State
+                    </div>
+                </div>
+
+                <div class="yard-terminal-layout">
+
+                    <div class="yard-waterfront">
+                        <span>VESSEL APRON / BERTH 02</span>
+                    </div>
+
+                    <div class="yard-transfer-road">
+                        <span>TERMINAL TRANSFER ROAD</span>
+                        <div id="yardTruckStrip" class="yard-truck-strip"></div>
+                    </div>
+
+                    <div class="yard-block-grid">
+
+                        <section class="yard-map-block" data-block="A">
+                            <div class="yard-map-block-header">
+                                <div>
+                                    <span>BLOCK</span>
+                                    <strong>A</strong>
+                                </div>
+                                <span id="yardBlockAUtilization">0 / 3</span>
+                            </div>
+                            <div id="yardMapBlockA" class="yard-map-slots"></div>
+                        </section>
+
+                        <section class="yard-map-block" data-block="B">
+                            <div class="yard-map-block-header">
+                                <div>
+                                    <span>BLOCK</span>
+                                    <strong>B</strong>
+                                </div>
+                                <span id="yardBlockBUtilization">0 / 3</span>
+                            </div>
+                            <div id="yardMapBlockB" class="yard-map-slots"></div>
+                        </section>
+
+                        <section class="yard-map-block" data-block="C">
+                            <div class="yard-map-block-header">
+                                <div>
+                                    <span>BLOCK</span>
+                                    <strong>C</strong>
+                                </div>
+                                <span id="yardBlockCUtilization">0 / 3</span>
+                            </div>
+                            <div id="yardMapBlockC" class="yard-map-slots"></div>
+                        </section>
+
+                        <section class="yard-map-block" data-block="D">
+                            <div class="yard-map-block-header">
+                                <div>
+                                    <span>BLOCK</span>
+                                    <strong>D</strong>
+                                </div>
+                                <span id="yardBlockDUtilization">0 / 3</span>
+                            </div>
+                            <div id="yardMapBlockD" class="yard-map-slots"></div>
+                        </section>
+
+                    </div>
+                </div>
+            </section>
+
+            <section class="yard-detail-grid">
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">ACTIVE MOVEMENT</p>
+                            <h3>Incoming Containers</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        id="yardIncomingList"
+                        class="yard-list"
+                    ></div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">TERMINAL FLEET</p>
+                            <h3>Truck Activity</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        id="yardTruckList"
+                        class="yard-list"
+                    ></div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">EXCEPTIONS</p>
+                            <h3>Yard Alerts</h3>
+                        </div>
+                    </div>
+
+                    <div class="yard-alert-empty">
+                        <span>✓</span>
+                        No active yard exceptions
+                    </div>
+                </article>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/yard_map.js') }}"
+    ></script>
+</body>
+</html>
