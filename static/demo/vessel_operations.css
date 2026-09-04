@@ -1248,3 +1248,194 @@ body,
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+
+/* ---------------------------------------------------------
+   Live Container Yard
+   --------------------------------------------------------- */
+
+.yard-operations {
+    margin-top: 14px;
+}
+
+.yard-summary {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    color: #718a9b;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+}
+
+.yard-summary span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.yard-summary strong {
+    color: #d9e7ef;
+    font-size: 15px;
+}
+
+.yard-map {
+    padding: 18px;
+    background: #08131e;
+}
+
+.yard-road {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    border: 1px solid #263d4e;
+    border-radius: 6px;
+    background:
+        linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 48%,
+            #385164 48%,
+            #385164 52%,
+            transparent 52%
+        ),
+        #0c1a26;
+}
+
+.yard-road span {
+    padding: 0 10px;
+    background: #0c1a26;
+    color: #60798b;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+}
+
+.yard-blocks {
+    display: grid;
+    grid-template-columns: repeat(
+        4,
+        minmax(0, 1fr)
+    );
+    gap: 12px;
+}
+
+.yard-block {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #263d4e;
+    border-radius: 8px;
+    background: #0b1824;
+}
+
+.yard-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+}
+
+.yard-block-header strong {
+    color: #a9bdca;
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.yard-block-header span {
+    color: #60798b;
+    font-size: 8px;
+}
+
+.yard-slots {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+}
+
+.yard-slot {
+    min-height: 56px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px dashed #294354;
+    border-radius: 5px;
+    background: #08131e;
+    transition:
+        border-color 0.4s ease,
+        background 0.4s ease,
+        transform 0.4s ease;
+}
+
+.yard-slot-location {
+    min-width: 0;
+}
+
+.yard-slot-location strong {
+    display: block;
+    color: #8299a9;
+    font-size: 9px;
+}
+
+.yard-slot-location span {
+    display: block;
+    margin-top: 3px;
+    color: #506a7c;
+    font-size: 7px;
+}
+
+.yard-container {
+    min-width: 74px;
+    padding: 7px 6px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+.yard-slot.empty .yard-container {
+    color: #4e6879;
+    border: 1px solid #263c4b;
+    background: #0b1924;
+}
+
+.yard-slot.incoming {
+    border-style: solid;
+    border-color: var(--orange);
+    background: rgba(245, 166, 35, 0.04);
+}
+
+.yard-slot.incoming .yard-container {
+    color: var(--orange);
+    border: 1px solid rgba(245, 166, 35, 0.45);
+    background: rgba(245, 166, 35, 0.1);
+}
+
+.yard-slot.occupied {
+    border-style: solid;
+    border-color: rgba(54, 214, 150, 0.55);
+    background: rgba(54, 214, 150, 0.04);
+}
+
+.yard-slot.occupied .yard-container {
+    color: var(--green);
+    border: 1px solid rgba(54, 214, 150, 0.4);
+    background: rgba(54, 214, 150, 0.1);
+}
+
+@media (max-width: 1050px) {
+    .yard-blocks {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .yard-blocks {
+        grid-template-columns: 1fr;
+    }
+}

@@ -110,6 +110,7 @@ function updateDashboard(state) {
     updateCranePerformance(state.cranes);
     updateVesselBayPlan(state.containers);
     updateTruckOperations(state.trucks);
+    updateYardOperations(state.containers);
     updateEventFeed(state.events);
 }
 
@@ -337,6 +338,179 @@ function updateTruckOperations(trucks) {
     if (activeElement) {
         activeElement.textContent =
             activeCount;
+    }
+}
+
+
+function parseYardDestination(destination) {
+    const match = destination.match(
+        /Block ([A-D]) \/ Row (\d+) \/ Slot (\d+)/
+    );
+
+    if (!match) {
+        return null;
+    }
+
+    return {
+        block: match[1],
+        row: match[2],
+        slot: match[3],
+    };
+}
+
+
+function updateYardOperations(containers) {
+    const blocks = {
+        A: [],
+        B: [],
+        C: [],
+        D: [],
+    };
+
+    let inYardCount = 0;
+    let incomingCount = 0;
+
+    Object.entries(containers).forEach(
+        ([containerId, container]) => {
+            const location =
+                parseYardDestination(
+                    container.destination
+                );
+
+            if (!location) {
+                return;
+            }
+
+            let yardStatus = "empty";
+
+            if (
+                container.status === "IN_TRANSIT"
+            ) {
+                yardStatus = "incoming";
+                incomingCount += 1;
+            }
+
+            if (
+                container.status === "IN_YARD"
+            ) {
+                yardStatus = "occupied";
+                inYardCount += 1;
+            }
+
+            blocks[location.block].push({
+                containerId,
+                location,
+                yardStatus,
+            });
+        }
+    );
+
+    Object.entries(blocks).forEach(
+        ([blockName, slots]) => {
+            const blockElement =
+                document.getElementById(
+                    `yardBlock${blockName}`
+                );
+
+            const countElement =
+                document.getElementById(
+                    `block${blockName}Count`
+                );
+
+            if (!blockElement) {
+                return;
+            }
+
+            blockElement.innerHTML = "";
+
+            slots.sort(
+                (a, b) =>
+                    Number(a.location.row)
+                    - Number(b.location.row)
+            );
+
+            let occupied = 0;
+
+            slots.forEach((slot) => {
+                if (
+                    slot.yardStatus ===
+                    "occupied"
+                ) {
+                    occupied += 1;
+                }
+
+                const element =
+                    document.createElement(
+                        "div"
+                    );
+
+                element.className =
+                    `yard-slot ${slot.yardStatus}`;
+
+                let containerLabel =
+                    "EMPTY";
+
+                if (
+                    slot.yardStatus ===
+                    "incoming"
+                ) {
+                    containerLabel =
+                        `${slot.containerId} →`;
+                }
+
+                if (
+                    slot.yardStatus ===
+                    "occupied"
+                ) {
+                    containerLabel =
+                        slot.containerId;
+                }
+
+                element.innerHTML = `
+                    <div class="yard-slot-location">
+                        <strong>
+                            Row ${slot.location.row}
+                        </strong>
+                        <span>
+                            Slot ${slot.location.slot}
+                        </span>
+                    </div>
+
+                    <div class="yard-container">
+                        ${containerLabel}
+                    </div>
+                `;
+
+                blockElement.appendChild(
+                    element
+                );
+            });
+
+            if (countElement) {
+                countElement.textContent =
+                    `${occupied} / ${slots.length}`;
+            }
+        }
+    );
+
+    const yardCountElement =
+        document.getElementById(
+            "yardContainerCount"
+        );
+
+    const incomingElement =
+        document.getElementById(
+            "yardIncomingCount"
+        );
+
+    if (yardCountElement) {
+        yardCountElement.textContent =
+            inYardCount;
+    }
+
+    if (incomingElement) {
+        incomingElement.textContent =
+            incomingCount;
     }
 }
 
