@@ -309,38 +309,147 @@ function showContainerDetails(containerId, containers) {
     const destination =
         parseYardDestination(container.destination);
 
+    const status = container.status;
+
+    const stageStates = {
+        vessel:
+            status === "ON_VESSEL"
+                ? "active"
+                : "complete",
+
+        crane:
+            status === "ON_VESSEL"
+                ? "upcoming"
+                : "complete",
+
+        truck:
+            status === "ON_TRUCK"
+                ? "active"
+                : (
+                    status === "IN_TRANSIT" ||
+                    status === "IN_YARD"
+                        ? "complete"
+                        : "upcoming"
+                ),
+
+        transit:
+            status === "IN_TRANSIT"
+                ? "active"
+                : (
+                    status === "IN_YARD"
+                        ? "complete"
+                        : "upcoming"
+                ),
+
+        yard:
+            status === "IN_YARD"
+                ? "active"
+                : "upcoming",
+    };
+
     result.innerHTML = `
         <div class="yard-trace-header">
-            <strong>${containerId}</strong>
-            <span>${formatStatus(container.status)}</span>
+            <div>
+                <strong>${containerId}</strong>
+                <span class="yard-trace-current-status">
+                    ${formatStatus(status)}
+                </span>
+            </div>
+
+            <span class="yard-trace-location">
+                ${
+                    status === "IN_YARD"
+                        ? `Block ${destination?.block || "—"}`
+                        : status === "IN_TRANSIT"
+                            ? "In Transit"
+                            : status === "ON_TRUCK"
+                                ? container.truck || "Truck Assigned"
+                                : `Bay ${container.bay}`
+                }
+            </span>
         </div>
 
-        <div class="yard-trace-grid">
-            <div>
-                <span>Vessel Bay</span>
-                <strong>
-                    ${container.bay} / ${container.row} / ${container.tier}
-                </strong>
+        <div class="container-journey">
+
+            <div class="journey-stage ${stageStates.vessel}">
+                <div class="journey-marker">1</div>
+
+                <div class="journey-content">
+                    <span>VESSEL</span>
+                    <strong>IRONHOOK HORIZON</strong>
+                    <small>
+                        Bay ${container.bay} /
+                        Row ${container.row} /
+                        Tier ${container.tier}
+                    </small>
+                </div>
             </div>
 
-            <div>
-                <span>Crane</span>
-                <strong>${container.crane}</strong>
+            <div class="journey-connector"></div>
+
+            <div class="journey-stage ${stageStates.crane}">
+                <div class="journey-marker">2</div>
+
+                <div class="journey-content">
+                    <span>CRANE</span>
+                    <strong>${container.crane}</strong>
+                    <small>
+                        Vessel discharge operation
+                    </small>
+                </div>
             </div>
 
-            <div>
-                <span>Truck</span>
-                <strong>${container.truck || "Not Assigned"}</strong>
+            <div class="journey-connector"></div>
+
+            <div class="journey-stage ${stageStates.truck}">
+                <div class="journey-marker">3</div>
+
+                <div class="journey-content">
+                    <span>TERMINAL TRUCK</span>
+                    <strong>
+                        ${container.truck || "Awaiting Assignment"}
+                    </strong>
+                    <small>
+                        ${
+                            container.truck
+                                ? "Container transferred to ground movement"
+                                : "Truck not yet assigned"
+                        }
+                    </small>
+                </div>
             </div>
 
-            <div>
-                <span>Yard Destination</span>
-                <strong>
-                    Block ${destination?.block || "—"} /
-                    Row ${destination?.row || "—"} /
-                    Slot ${destination?.slot || "—"}
-                </strong>
+            <div class="journey-connector"></div>
+
+            <div class="journey-stage ${stageStates.transit}">
+                <div class="journey-marker">4</div>
+
+                <div class="journey-content">
+                    <span>TRANSFER ROAD</span>
+                    <strong>Terminal Transit</strong>
+                    <small>
+                        Moving toward Block ${destination?.block || "—"}
+                    </small>
+                </div>
             </div>
+
+            <div class="journey-connector"></div>
+
+            <div class="journey-stage ${stageStates.yard}">
+                <div class="journey-marker">5</div>
+
+                <div class="journey-content">
+                    <span>YARD DESTINATION</span>
+                    <strong>
+                        Block ${destination?.block || "—"}
+                    </strong>
+                    <small>
+                        Row ${destination?.row || "—"} /
+                        Slot ${destination?.slot || "—"}
+                    </small>
+                </div>
+            </div>
+
         </div>
     `;
 }
