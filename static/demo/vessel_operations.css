@@ -3220,3 +3220,33 @@ button.yard-list-item {
         grid-template-columns: 1fr;
     }
 }
+
+/* Real Digital Credential QR */
+
+.credential-qr-box {
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
+    padding: 5px;
+    overflow: hidden;
+    background: #ffffff;
+    border-radius: 6px;
+}
+
+.credential-qr-box img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    opacity: 0;
+}
+
+.credential-qr-box img.loaded {
+    opacity: 1;
+}
+
+.credential-qr-preview {
+    min-width: 0;
+    overflow: hidden;
+}

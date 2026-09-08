@@ -6,6 +6,58 @@ let workforceState = {
 
 let selectedWorkerId = null;
 
+async function loadWorkerQr(workerId) {
+    const qrImage = document.getElementById(
+        "workerCredentialQr"
+    );
+
+    if (!qrImage) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/api/workers/${workerId}/credential/qr`,
+            {
+                method: "POST",
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to generate credential QR"
+            );
+        }
+
+        const blob = await response.blob();
+
+        if (qrImage.dataset.objectUrl) {
+            URL.revokeObjectURL(
+                qrImage.dataset.objectUrl
+            );
+        }
+
+        const objectUrl =
+            URL.createObjectURL(blob);
+
+        qrImage.dataset.objectUrl =
+            objectUrl;
+
+        qrImage.src = objectUrl;
+
+        qrImage.classList.add("loaded");
+    } catch (error) {
+        console.error(
+            "QR load failed:",
+            error
+        );
+
+        qrImage.alt =
+            "Credential QR unavailable";
+    }
+}
+
+
 async function fetchWorkerCredential(workerId) {
     const response = await fetch(
         `/api/workers/${workerId}/credential`
@@ -468,7 +520,10 @@ async function selectWorker(worker) {
 
             <div class="credential-qr-preview">
                 <div class="credential-qr-box">
-                    <span>IH</span>
+                    <img
+                        id="workerCredentialQr"
+                        alt="IronHook Digital Credential QR"
+                    >
                 </div>
 
                 <div>
@@ -591,6 +646,10 @@ async function selectWorker(worker) {
 
         </div>
     `;
+
+    await loadWorkerQr(
+        worker.worker_id
+    );
 }
 
 function renderShift() {

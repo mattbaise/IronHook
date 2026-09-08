@@ -1,6 +1,11 @@
+import hashlib
+import io
+import secrets
+
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+import qrcode
+from flask import Blueprint, jsonify, request, send_file
 from psycopg import errors
 
 from db import get_connection
@@ -843,3 +848,266 @@ def safety_stop_assignment(assignment_id):
             )
 
     return jsonify({"message": "Work paused and safety stop recorded"})
+
+
+@api.post("/workers/<int:worker_id>/credential/qr")
+def generate_worker_credential_qr(worker_id):
+    token = secrets.token_urlsafe(32)
+
+    token_hash = hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    wc.credential_id,
+                    wc.credential_code,
+                    wc.credential_status,
+                    wc.expires_at
+                FROM worker_credential wc
+                WHERE wc.worker_id = %s
+                """,
+                (worker_id,),
+            )
+
+            credential = cursor.fetchone()
+
+            if credential is None:
+                return error_response(
+                    "Worker credential not found",
+                    404,
+                )
+
+            if credential["credential_status"] != "ACTIVE":
+                return error_response(
+                    "Credential is not active",
+                    403,
+                )
+
+            expires_at = credential["expires_at"]
+
+            if (
+                expires_at is not None
+                and expires_at <= datetime.now(timezone.utc)
+            ):
+                return error_response(
+                    "Credential has expired",
+                    403,
+                )
+
+            cursor.execute(
+                """
+                UPDATE worker_credential
+                SET
+                    qr_token_hash = %s,
+                    last_rotated_at = CURRENT_TIMESTAMP
+                WHERE credential_id = %s
+                """,
+                (
+                    token_hash,
+                    credential["credential_id"],
+                ),
+            )
+
+    payload = f"IRONHOOK:CREDENTIAL:{token}"
+
+    qr_image = qrcode.make(payload)
+
+    image_buffer = io.BytesIO()
+
+    qr_image.save(
+        image_buffer,
+        format="PNG",
+    )
+
+    image_buffer.seek(0)
+
+    return send_file(
+        image_buffer,
+        mimetype="image/png",
+        download_name=(
+            f"{credential['credential_code']}.png"
+        ),
+    )
+
+
+@api.post("/credentials/scan")
+def scan_worker_credential():
+    data = request.get_json(silent=True) or {}
+
+    token = str(
+        data.get("token", "")
+    ).strip()
+
+    scan_type = str(
+        data.get("scan_type", "")
+    ).strip().upper()
+
+    device_code = (
+        str(data.get("device_code")).strip()
+        if data.get("device_code")
+        else None
+    )
+
+    location_label = (
+        str(data.get("location_label")).strip()
+        if data.get("location_label")
+        else None
+    )
+
+    terminal_id = data.get("terminal_id")
+
+    valid_scan_types = {
+        "BADGE_IN",
+        "HIRE_SELECTION",
+        "EQUIPMENT_ASSIGNMENT",
+        "GATE_ACCESS",
+        "BADGE_OUT",
+    }
+
+    if not token:
+        return error_response(
+            "token is required",
+            400,
+        )
+
+    if scan_type not in valid_scan_types:
+        return error_response(
+            "Invalid scan_type",
+            400,
+        )
+
+    if terminal_id is not None:
+        try:
+            terminal_id = require_positive_integer(
+                terminal_id,
+                "terminal_id",
+            )
+        except ValueError as error:
+            return error_response(
+                str(error),
+                400,
+            )
+
+    token_hash = hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    wc.credential_id,
+                    wc.credential_code,
+                    wc.credential_status,
+                    wc.expires_at,
+                    w.worker_id,
+                    w.employee_number,
+                    w.first_name,
+                    w.last_name,
+                    w.job_classification,
+                    w.active
+                FROM worker_credential wc
+                JOIN worker w
+                    ON w.worker_id = wc.worker_id
+                WHERE wc.qr_token_hash = %s
+                """,
+                (token_hash,),
+            )
+
+            credential = cursor.fetchone()
+
+            if credential is None:
+                return error_response(
+                    "Invalid credential",
+                    401,
+                )
+
+            credential_allowed = (
+                credential["credential_status"]
+                == "ACTIVE"
+                and credential["active"]
+            )
+
+            if (
+                credential["expires_at"] is not None
+                and credential["expires_at"]
+                <= datetime.now(timezone.utc)
+            ):
+                credential_allowed = False
+
+            scan_result = (
+                "GRANTED"
+                if credential_allowed
+                else "DENIED"
+            )
+
+            cursor.execute(
+                """
+                INSERT INTO credential_scan_event (
+                    credential_id,
+                    terminal_id,
+                    scan_type,
+                    scan_result,
+                    device_code,
+                    location_label,
+                    details
+                )
+                VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s::jsonb
+                )
+                RETURNING
+                    scan_event_id,
+                    scanned_at
+                """,
+                (
+                    credential["credential_id"],
+                    terminal_id,
+                    scan_type,
+                    scan_result,
+                    device_code,
+                    location_label,
+                    "{}",
+                ),
+            )
+
+            scan_event = cursor.fetchone()
+
+    response = {
+        "authorized": credential_allowed,
+        "scan_result": scan_result,
+        "scan_event_id": scan_event[
+            "scan_event_id"
+        ],
+        "scanned_at": scan_event[
+            "scanned_at"
+        ],
+        "credential": {
+            "credential_code":
+                credential["credential_code"],
+            "employee_number":
+                credential["employee_number"],
+            "worker_name":
+                (
+                    f"{credential['first_name']} "
+                    f"{credential['last_name']}"
+                ),
+            "job_classification":
+                credential["job_classification"],
+        },
+    }
+
+    if not credential_allowed:
+        return jsonify(response), 403
+
+    return jsonify(response), 200
