@@ -40,6 +40,10 @@ def create_app():
     def equipment_demo():
         return render_template("demo/equipment.html")
 
+    @app.get("/demo/trucks")
+    def trucks_demo():
+        return render_template("demo/trucks.html")
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404

@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-    <title>IronHook | Equipment</title>
+
+    <title>IronHook | Trucks</title>
 
     <link
         rel="stylesheet"
@@ -42,11 +44,14 @@
                     □ Containers
                 </a>
 
-                <a href="/demo/equipment" class="nav-item active">
+                <a href="/demo/equipment" class="nav-item">
                     ⌁ Equipment
                 </a>
 
-                <a href="/demo/trucks" class="nav-item">▣ Trucks</a>
+                <a href="/demo/trucks" class="nav-item active">
+                    ▣ Trucks
+                </a>
+
                 <a href="#" class="nav-item">♙ Workforce</a>
                 <a href="#" class="nav-item">✓ Assignments</a>
                 <a href="#" class="nav-item">⇄ Gate Activity</a>
@@ -74,7 +79,7 @@
                         IRONHOOK LIVE TERMINAL
                     </p>
 
-                    <h2>Equipment</h2>
+                    <h2>Trucks</h2>
                 </div>
 
                 <div class="topbar-right">
@@ -82,177 +87,173 @@
                         <span class="status-dot"></span>
                         Terminal Operational
                     </div>
+
+                    <button
+                        class="start-button"
+                        id="startTruckSimulation"
+                    >
+                        ▶ Start Simulation
+                    </button>
                 </div>
             </header>
 
             <section class="demo-banner">
-                Interactive Product Demonstration
-                <span>Live Equipment Data</span>
+                Ground Transportation Control
+                <span>Live Dispatch + Fleet Data</span>
             </section>
 
-            <section class="equipment-kpi-grid">
+            <section class="truck-kpi-grid">
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        Total Equipment
+                        Demo Trucks
                     </span>
 
-                    <strong id="equipmentTotalCount">
+                    <strong id="truckDemoTotal">
                         0
                     </strong>
 
                     <small>
-                        Registered terminal assets
+                        Active dispatch fleet
                     </small>
                 </article>
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        Ready
+                        Available
                     </span>
 
-                    <strong id="equipmentReadyCount">
+                    <strong id="truckAvailableCount">
                         0
                     </strong>
 
                     <small>
-                        Cleared for service
+                        Ready for dispatch
                     </small>
                 </article>
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        Assigned
+                        In Motion
                     </span>
 
-                    <strong id="equipmentAssignedCount">
+                    <strong id="truckActiveCount">
                         0
                     </strong>
 
                     <small>
-                        Currently allocated
+                        Assigned or in transit
                     </small>
                 </article>
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        Out of Service
+                        Fleet Exceptions
                     </span>
 
-                    <strong id="equipmentUnavailableCount">
+                    <strong id="truckExceptionCount">
                         0
                     </strong>
 
                     <small>
-                        Down, restricted or maintenance
+                        Database trucks out of service
                     </small>
                 </article>
 
             </section>
 
-            <section class="equipment-layout">
+            <section class="truck-page-layout">
 
-                <article class="panel equipment-control-panel">
+                <article class="panel truck-dispatch-panel">
+
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">
-                                TERMINAL ASSETS
+                                LIVE GROUND MOVEMENT
                             </p>
 
-                            <h3>Equipment Control</h3>
+                            <h3>Terminal Truck Dispatch</h3>
+                        </div>
+
+                        <div class="yard-live-status">
+                            <span class="status-dot"></span>
+                            Live Simulation State
                         </div>
                     </div>
 
-                    <div class="equipment-toolbar">
-
+                    <div class="truck-toolbar">
                         <input
-                            id="equipmentSearch"
+                            id="truckSearch"
                             type="text"
-                            placeholder="Search equipment code"
+                            placeholder="Search truck, driver or container"
                             autocomplete="off"
                         >
 
-                        <select id="equipmentTypeFilter">
-                            <option value="ALL">
-                                All Equipment
-                            </option>
-
-                            <option value="STS_CRANE">
-                                STS Crane
-                            </option>
-
-                            <option value="RTG">
-                                RTG
-                            </option>
-
-                            <option value="TOP_PICK">
-                                Top Pick
-                            </option>
-
-                            <option value="CHASSIS">
-                                Chassis
-                            </option>
-
-                            <option value="YARD_TRUCK">
-                                Yard Truck
-                            </option>
-                        </select>
-
-                        <select id="equipmentStatusFilter">
+                        <select id="truckStatusFilter">
                             <option value="ALL">
                                 All Statuses
                             </option>
 
-                            <option value="READY">
-                                Ready
+                            <option value="AVAILABLE">
+                                Available
                             </option>
 
                             <option value="ASSIGNED">
                                 Assigned
                             </option>
 
-                            <option value="DOWN">
-                                Down
-                            </option>
-
-                            <option value="MAINTENANCE">
-                                Maintenance
-                            </option>
-
-                            <option value="RESTRICTED">
-                                Restricted
+                            <option value="IN_TRANSIT">
+                                In Transit
                             </option>
                         </select>
-
                     </div>
 
                     <div
-                        id="equipmentGrid"
-                        class="equipment-card-grid"
+                        id="truckDispatchGrid"
+                        class="truck-dispatch-grid"
                     ></div>
 
                 </article>
 
-                <aside class="panel equipment-detail-panel">
+                <aside class="panel truck-detail-panel">
 
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">
-                                ASSET DETAIL
+                                TRUCK DETAIL
                             </p>
 
-                            <h3>Equipment Status</h3>
+                            <h3>Active Movement</h3>
                         </div>
                     </div>
 
                     <div
-                        id="equipmentDetail"
-                        class="equipment-detail-empty"
+                        id="truckDetail"
+                        class="truck-detail-empty"
                     >
-                        Select an equipment asset to view details.
+                        Select a truck to view its current assignment.
                     </div>
 
                 </aside>
+
+            </section>
+
+            <section class="panel truck-fleet-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">
+                            EQUIPMENT DATABASE
+                        </p>
+
+                        <h3>Registered Yard Truck Fleet</h3>
+                    </div>
+                </div>
+
+                <div
+                    id="truckFleetGrid"
+                    class="truck-fleet-grid"
+                ></div>
 
             </section>
 
@@ -260,7 +261,7 @@
     </div>
 
     <script
-        src="{{ url_for('static', filename='demo/equipment.js') }}"
+        src="{{ url_for('static', filename='demo/trucks.js') }}"
     ></script>
 </body>
 </html>
