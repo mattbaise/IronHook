@@ -285,6 +285,8 @@ function renderTruckActivity(trucks) {
     );
 }
 
+let selectedContainerId = null;
+
 async function fetchContainerHistory(containerId) {
     const response = await fetch(
         `/api/demo/containers/${containerId}/history`
@@ -589,6 +591,13 @@ function updateYardPage(state) {
     renderIncomingContainers(state.containers);
     renderTruckActivity(state.trucks);
     configureSearch(state.containers);
+
+    if (selectedContainerId) {
+        showContainerDetails(
+            selectedContainerId,
+            state.containers,
+        );
+    }
 }
 
 async function loadYardPage() {
