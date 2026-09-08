@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import io
+import json
 import os
 
 from datetime import datetime, timezone
@@ -1365,6 +1366,40 @@ def scan_worker_credential():
                 else "DENIED"
             )
 
+            scan_details = {}
+
+            if denial_reason:
+                scan_details[
+                    "denial_reason"
+                ] = denial_reason
+
+            if scan_type == "EQUIPMENT_ASSIGNMENT":
+                scan_details[
+                    "equipment_id"
+                ] = equipment_id
+
+                scan_details[
+                    "required_certification"
+                ] = required_certification
+
+                if equipment:
+                    scan_details.update(
+                        {
+                            "equipment_code":
+                                equipment[
+                                    "equipment_code"
+                                ],
+                            "equipment_type":
+                                equipment[
+                                    "equipment_type"
+                                ],
+                            "operating_status":
+                                equipment[
+                                    "operating_status"
+                                ],
+                        }
+                    )
+
             cursor.execute(
                 """
                 INSERT INTO
@@ -1399,7 +1434,9 @@ def scan_worker_credential():
                     scan_result,
                     device_code,
                     location_label,
-                    "{}",
+                    json.dumps(
+                        scan_details
+                    ),
                 ),
             )
 
