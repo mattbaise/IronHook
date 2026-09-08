@@ -1485,3 +1485,98 @@ def scan_worker_credential():
 
     return jsonify(response), 200
 
+
+@api.get("/credential-scan-events")
+def get_credential_scan_events():
+    limit_value = request.args.get(
+        "limit",
+        default="50",
+    )
+
+    try:
+        limit = int(limit_value)
+    except ValueError:
+        return error_response(
+            "limit must be an integer",
+            400,
+        )
+
+    if limit < 1 or limit > 200:
+        return error_response(
+            "limit must be between 1 and 200",
+            400,
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    cse.scan_event_id,
+                    cse.scan_type,
+                    cse.scan_result,
+                    cse.device_code,
+                    cse.location_label,
+                    cse.details,
+                    cse.scanned_at,
+                    wc.credential_code,
+                    w.employee_number,
+                    w.first_name,
+                    w.last_name,
+                    w.job_classification
+                FROM credential_scan_event cse
+                JOIN worker_credential wc
+                    ON wc.credential_id =
+                       cse.credential_id
+                JOIN worker w
+                    ON w.worker_id =
+                       wc.worker_id
+                ORDER BY
+                    cse.scanned_at DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+
+            rows = cursor.fetchall()
+
+    events = []
+
+    for row in rows:
+        events.append(
+            {
+                "scan_event_id":
+                    row["scan_event_id"],
+                "scan_type":
+                    row["scan_type"],
+                "scan_result":
+                    row["scan_result"],
+                "device_code":
+                    row["device_code"],
+                "location_label":
+                    row["location_label"],
+                "details":
+                    row["details"] or {},
+                "scanned_at":
+                    row["scanned_at"],
+                "credential_code":
+                    row["credential_code"],
+                "employee_number":
+                    row["employee_number"],
+                "worker_name":
+                    (
+                        f"{row['first_name']} "
+                        f"{row['last_name']}"
+                    ),
+                "job_classification":
+                    row["job_classification"],
+            }
+        )
+
+    return jsonify(
+        {
+            "count": len(events),
+            "events": events,
+        }
+    ), 200
+

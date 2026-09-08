@@ -54,6 +54,12 @@ def create_app():
             "demo/credential_scan.html"
         )
 
+    @app.get("/demo/access-history")
+    def access_history_demo():
+        return render_template(
+            "demo/access_history.html"
+        )
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404
