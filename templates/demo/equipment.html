@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>IronHook | Equipment</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">◫ Overview</a>
+
+                <a href="/demo" class="nav-item">
+                    ▦ Vessel Operations
+                </a>
+
+                <a href="/demo/yard" class="nav-item">
+                    ▤ Yard Map
+                </a>
+
+                <a href="/demo/containers" class="nav-item">
+                    □ Containers
+                </a>
+
+                <a href="/demo/equipment" class="nav-item active">
+                    ⌁ Equipment
+                </a>
+
+                <a href="#" class="nav-item">▣ Trucks</a>
+                <a href="#" class="nav-item">♙ Workforce</a>
+                <a href="#" class="nav-item">✓ Assignments</a>
+                <a href="#" class="nav-item">⇄ Gate Activity</a>
+                <a href="#" class="nav-item">! Alerts</a>
+                <a href="#" class="nav-item">↗ Analytics</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+
+                <div class="demo-label">
+                    SIMULATED DATA
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">
+                        IRONHOOK LIVE TERMINAL
+                    </p>
+
+                    <h2>Equipment</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Terminal Operational
+                    </div>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Interactive Product Demonstration
+                <span>Live Equipment Data</span>
+            </section>
+
+            <section class="equipment-kpi-grid">
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Total Equipment
+                    </span>
+
+                    <strong id="equipmentTotalCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Registered terminal assets
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Ready
+                    </span>
+
+                    <strong id="equipmentReadyCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Cleared for service
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Assigned
+                    </span>
+
+                    <strong id="equipmentAssignedCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Currently allocated
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Out of Service
+                    </span>
+
+                    <strong id="equipmentUnavailableCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Down, restricted or maintenance
+                    </small>
+                </article>
+
+            </section>
+
+            <section class="equipment-layout">
+
+                <article class="panel equipment-control-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                TERMINAL ASSETS
+                            </p>
+
+                            <h3>Equipment Control</h3>
+                        </div>
+                    </div>
+
+                    <div class="equipment-toolbar">
+
+                        <input
+                            id="equipmentSearch"
+                            type="text"
+                            placeholder="Search equipment code"
+                            autocomplete="off"
+                        >
+
+                        <select id="equipmentTypeFilter">
+                            <option value="ALL">
+                                All Equipment
+                            </option>
+
+                            <option value="STS_CRANE">
+                                STS Crane
+                            </option>
+
+                            <option value="RTG">
+                                RTG
+                            </option>
+
+                            <option value="TOP_PICK">
+                                Top Pick
+                            </option>
+
+                            <option value="CHASSIS">
+                                Chassis
+                            </option>
+
+                            <option value="YARD_TRUCK">
+                                Yard Truck
+                            </option>
+                        </select>
+
+                        <select id="equipmentStatusFilter">
+                            <option value="ALL">
+                                All Statuses
+                            </option>
+
+                            <option value="READY">
+                                Ready
+                            </option>
+
+                            <option value="ASSIGNED">
+                                Assigned
+                            </option>
+
+                            <option value="DOWN">
+                                Down
+                            </option>
+
+                            <option value="MAINTENANCE">
+                                Maintenance
+                            </option>
+
+                            <option value="RESTRICTED">
+                                Restricted
+                            </option>
+                        </select>
+
+                    </div>
+
+                    <div
+                        id="equipmentGrid"
+                        class="equipment-card-grid"
+                    ></div>
+
+                </article>
+
+                <aside class="panel equipment-detail-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                ASSET DETAIL
+                            </p>
+
+                            <h3>Equipment Status</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        id="equipmentDetail"
+                        class="equipment-detail-empty"
+                    >
+                        Select an equipment asset to view details.
+                    </div>
+
+                </aside>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/equipment.js') }}"
+    ></script>
+</body>
+</html>
