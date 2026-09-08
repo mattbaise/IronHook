@@ -17,10 +17,7 @@ async function loadWorkerQr(workerId) {
 
     try {
         const response = await fetch(
-            `/api/workers/${workerId}/credential/qr`,
-            {
-                method: "POST",
-            }
+            `/api/workers/${workerId}/credential/qr`
         );
 
         if (!response.ok) {

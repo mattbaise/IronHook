@@ -1,6 +1,7 @@
 import hashlib
+import hmac
 import io
-import secrets
+import os
 
 from datetime import datetime, timezone
 
@@ -850,69 +851,62 @@ def safety_stop_assignment(assignment_id):
     return jsonify({"message": "Work paused and safety stop recorded"})
 
 
-@api.post("/workers/<int:worker_id>/credential/qr")
-def generate_worker_credential_qr(worker_id):
-    token = secrets.token_urlsafe(32)
+def get_credential_secret():
+    secret = os.getenv(
+        "IRONHOOK_CREDENTIAL_SECRET",
+        "",
+    )
 
-    token_hash = hashlib.sha256(
-        token.encode("utf-8")
+    if not secret:
+        return None
+
+    return secret.encode("utf-8")
+
+
+def credential_version(credential):
+    version_time = (
+        credential["last_rotated_at"]
+        or credential["issued_at"]
+    )
+
+    return int(version_time.timestamp())
+
+
+def build_credential_payload(credential):
+    secret = get_credential_secret()
+
+    if secret is None:
+        raise RuntimeError(
+            "Credential signing secret is not configured"
+        )
+
+    version = credential_version(
+        credential
+    )
+
+    message = (
+        f"1:"
+        f"{credential['credential_id']}:"
+        f"{version}"
+    )
+
+    signature = hmac.new(
+        secret,
+        message.encode("utf-8"),
+        hashlib.sha256,
     ).hexdigest()
 
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT
-                    wc.credential_id,
-                    wc.credential_code,
-                    wc.credential_status,
-                    wc.expires_at
-                FROM worker_credential wc
-                WHERE wc.worker_id = %s
-                """,
-                (worker_id,),
-            )
+    return (
+        "IRONHOOK:CREDENTIAL:"
+        f"{message}:"
+        f"{signature}"
+    )
 
-            credential = cursor.fetchone()
 
-            if credential is None:
-                return error_response(
-                    "Worker credential not found",
-                    404,
-                )
-
-            if credential["credential_status"] != "ACTIVE":
-                return error_response(
-                    "Credential is not active",
-                    403,
-                )
-
-            expires_at = credential["expires_at"]
-
-            if (
-                expires_at is not None
-                and expires_at <= datetime.now(timezone.utc)
-            ):
-                return error_response(
-                    "Credential has expired",
-                    403,
-                )
-
-            cursor.execute(
-                """
-                UPDATE worker_credential
-                SET
-                    qr_token_hash = %s,
-                    last_rotated_at = CURRENT_TIMESTAMP
-                WHERE credential_id = %s
-                """,
-                (
-                    token_hash,
-                    credential["credential_id"],
-                ),
-            )
-
-    payload = f"IRONHOOK:CREDENTIAL:{token}"
+def create_qr_response(credential):
+    payload = build_credential_payload(
+        credential
+    )
 
     qr_image = qrcode.make(payload)
 
@@ -934,12 +928,113 @@ def generate_worker_credential_qr(worker_id):
     )
 
 
+@api.get("/workers/<int:worker_id>/credential/qr")
+def get_worker_credential_qr(worker_id):
+    if get_credential_secret() is None:
+        return error_response(
+            "Credential signing is not configured",
+            503,
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    credential_id,
+                    credential_code,
+                    credential_status,
+                    issued_at,
+                    expires_at,
+                    last_rotated_at
+                FROM worker_credential
+                WHERE worker_id = %s
+                """,
+                (worker_id,),
+            )
+
+            credential = cursor.fetchone()
+
+    if credential is None:
+        return error_response(
+            "Worker credential not found",
+            404,
+        )
+
+    if (
+        credential["credential_status"]
+        != "ACTIVE"
+    ):
+        return error_response(
+            "Credential is not active",
+            403,
+        )
+
+    if (
+        credential["expires_at"] is not None
+        and credential["expires_at"]
+        <= datetime.now(timezone.utc)
+    ):
+        return error_response(
+            "Credential has expired",
+            403,
+        )
+
+    return create_qr_response(
+        credential
+    )
+
+
+@api.post("/workers/<int:worker_id>/credential/qr/rotate")
+def rotate_worker_credential_qr(worker_id):
+    if get_credential_secret() is None:
+        return error_response(
+            "Credential signing is not configured",
+            503,
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE worker_credential
+                SET
+                    last_rotated_at =
+                        CURRENT_TIMESTAMP
+                WHERE worker_id = %s
+                  AND credential_status = 'ACTIVE'
+                RETURNING
+                    credential_id,
+                    credential_code,
+                    credential_status,
+                    issued_at,
+                    expires_at,
+                    last_rotated_at
+                """,
+                (worker_id,),
+            )
+
+            credential = cursor.fetchone()
+
+    if credential is None:
+        return error_response(
+            "Active worker credential not found",
+            404,
+        )
+
+    return create_qr_response(
+        credential
+    )
+
+
 @api.post("/credentials/scan")
 def scan_worker_credential():
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
-    token = str(
-        data.get("token", "")
+    payload = str(
+        data.get("payload", "")
     ).strip()
 
     scan_type = str(
@@ -947,18 +1042,24 @@ def scan_worker_credential():
     ).strip().upper()
 
     device_code = (
-        str(data.get("device_code")).strip()
+        str(
+            data.get("device_code")
+        ).strip()
         if data.get("device_code")
         else None
     )
 
     location_label = (
-        str(data.get("location_label")).strip()
+        str(
+            data.get("location_label")
+        ).strip()
         if data.get("location_label")
         else None
     )
 
-    terminal_id = data.get("terminal_id")
+    terminal_id = data.get(
+        "terminal_id"
+    )
 
     valid_scan_types = {
         "BADGE_IN",
@@ -968,9 +1069,9 @@ def scan_worker_credential():
         "BADGE_OUT",
     }
 
-    if not token:
+    if not payload:
         return error_response(
-            "token is required",
+            "payload is required",
             400,
         )
 
@@ -980,11 +1081,19 @@ def scan_worker_credential():
             400,
         )
 
+    if get_credential_secret() is None:
+        return error_response(
+            "Credential signing is not configured",
+            503,
+        )
+
     if terminal_id is not None:
         try:
-            terminal_id = require_positive_integer(
-                terminal_id,
-                "terminal_id",
+            terminal_id = (
+                require_positive_integer(
+                    terminal_id,
+                    "terminal_id",
+                )
             )
         except ValueError as error:
             return error_response(
@@ -992,9 +1101,50 @@ def scan_worker_credential():
                 400,
             )
 
-    token_hash = hashlib.sha256(
-        token.encode("utf-8")
+    parts = payload.split(":")
+
+    if (
+        len(parts) != 6
+        or parts[0] != "IRONHOOK"
+        or parts[1] != "CREDENTIAL"
+        or parts[2] != "1"
+    ):
+        return error_response(
+            "Invalid credential payload",
+            401,
+        )
+
+    try:
+        credential_id = int(parts[3])
+        scanned_version = int(parts[4])
+    except ValueError:
+        return error_response(
+            "Invalid credential payload",
+            401,
+        )
+
+    supplied_signature = parts[5]
+
+    message = (
+        f"1:"
+        f"{credential_id}:"
+        f"{scanned_version}"
+    )
+
+    expected_signature = hmac.new(
+        get_credential_secret(),
+        message.encode("utf-8"),
+        hashlib.sha256,
     ).hexdigest()
+
+    if not hmac.compare_digest(
+        supplied_signature,
+        expected_signature,
+    ):
+        return error_response(
+            "Invalid credential signature",
+            401,
+        )
 
     with get_connection() as connection:
         with connection.cursor() as cursor:
@@ -1004,7 +1154,9 @@ def scan_worker_credential():
                     wc.credential_id,
                     wc.credential_code,
                     wc.credential_status,
+                    wc.issued_at,
                     wc.expires_at,
+                    wc.last_rotated_at,
                     w.worker_id,
                     w.employee_number,
                     w.first_name,
@@ -1013,32 +1165,49 @@ def scan_worker_credential():
                     w.active
                 FROM worker_credential wc
                 JOIN worker w
-                    ON w.worker_id = wc.worker_id
-                WHERE wc.qr_token_hash = %s
+                    ON w.worker_id =
+                       wc.worker_id
+                WHERE wc.credential_id = %s
                 """,
-                (token_hash,),
+                (credential_id,),
             )
 
             credential = cursor.fetchone()
 
             if credential is None:
                 return error_response(
-                    "Invalid credential",
+                    "Credential not found",
                     401,
                 )
 
-            credential_allowed = (
-                credential["credential_status"]
-                == "ACTIVE"
-                and credential["active"]
+            current_version = (
+                credential_version(
+                    credential
+                )
             )
 
-            if (
-                credential["expires_at"] is not None
-                and credential["expires_at"]
-                <= datetime.now(timezone.utc)
-            ):
-                credential_allowed = False
+            version_matches = (
+                scanned_version
+                == current_version
+            )
+
+            not_expired = (
+                credential["expires_at"]
+                is None
+                or credential["expires_at"]
+                > datetime.now(
+                    timezone.utc
+                )
+            )
+
+            credential_allowed = (
+                version_matches
+                and credential[
+                    "credential_status"
+                ] == "ACTIVE"
+                and credential["active"]
+                and not_expired
+            )
 
             scan_result = (
                 "GRANTED"
@@ -1046,17 +1215,42 @@ def scan_worker_credential():
                 else "DENIED"
             )
 
+            denial_reason = None
+
+            if not version_matches:
+                denial_reason = (
+                    "Credential has been rotated"
+                )
+            elif (
+                credential[
+                    "credential_status"
+                ]
+                != "ACTIVE"
+            ):
+                denial_reason = (
+                    "Credential is not active"
+                )
+            elif not credential["active"]:
+                denial_reason = (
+                    "Worker is inactive"
+                )
+            elif not not_expired:
+                denial_reason = (
+                    "Credential has expired"
+                )
+
             cursor.execute(
                 """
-                INSERT INTO credential_scan_event (
-                    credential_id,
-                    terminal_id,
-                    scan_type,
-                    scan_result,
-                    device_code,
-                    location_label,
-                    details
-                )
+                INSERT INTO
+                    credential_scan_event (
+                        credential_id,
+                        terminal_id,
+                        scan_type,
+                        scan_result,
+                        device_code,
+                        location_label,
+                        details
+                    )
                 VALUES (
                     %s,
                     %s,
@@ -1071,7 +1265,9 @@ def scan_worker_credential():
                     scanned_at
                 """,
                 (
-                    credential["credential_id"],
+                    credential[
+                        "credential_id"
+                    ],
                     terminal_id,
                     scan_type,
                     scan_result,
@@ -1081,29 +1277,43 @@ def scan_worker_credential():
                 ),
             )
 
-            scan_event = cursor.fetchone()
+            scan_event = (
+                cursor.fetchone()
+            )
 
     response = {
-        "authorized": credential_allowed,
-        "scan_result": scan_result,
-        "scan_event_id": scan_event[
-            "scan_event_id"
-        ],
-        "scanned_at": scan_event[
-            "scanned_at"
-        ],
+        "authorized":
+            credential_allowed,
+        "scan_result":
+            scan_result,
+        "denial_reason":
+            denial_reason,
+        "scan_event_id":
+            scan_event[
+                "scan_event_id"
+            ],
+        "scanned_at":
+            scan_event[
+                "scanned_at"
+            ],
         "credential": {
             "credential_code":
-                credential["credential_code"],
+                credential[
+                    "credential_code"
+                ],
             "employee_number":
-                credential["employee_number"],
+                credential[
+                    "employee_number"
+                ],
             "worker_name":
                 (
                     f"{credential['first_name']} "
                     f"{credential['last_name']}"
                 ),
             "job_classification":
-                credential["job_classification"],
+                credential[
+                    "job_classification"
+                ],
         },
     }
 
@@ -1111,3 +1321,4 @@ def scan_worker_credential():
         return jsonify(response), 403
 
     return jsonify(response), 200
+
