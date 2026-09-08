@@ -2646,3 +2646,348 @@ button.yard-list-item {
         grid-column: span 1;
     }
 }
+
+/* ---------------------------------------------------------
+   Workforce Page
+--------------------------------------------------------- */
+
+.workforce-kpi-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+}
+
+.workforce-page-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.55fr)
+        minmax(300px, 0.75fr);
+    gap: 14px;
+}
+
+.workforce-toolbar {
+    display: grid;
+    grid-template-columns:
+        minmax(220px, 1fr)
+        180px;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.workforce-toolbar input,
+.workforce-toolbar select {
+    width: 100%;
+    padding: 10px 12px;
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background:
+        rgba(255, 255, 255, 0.03);
+    color: #fff;
+    outline: none;
+}
+
+.workforce-card-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.workforce-card {
+    width: 100%;
+    padding: 13px;
+    border:
+        1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 9px;
+    background:
+        rgba(255, 255, 255, 0.02);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.workforce-card:hover {
+    border-color:
+        rgba(73, 196, 255, 0.3);
+}
+
+.workforce-card.selected {
+    border-color:
+        rgba(73, 196, 255, 0.55);
+    background:
+        rgba(73, 196, 255, 0.07);
+}
+
+.workforce-card-header,
+.workforce-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.workforce-card-header > div span,
+.workforce-card-header > div strong,
+.workforce-detail-header > div span,
+.workforce-detail-header > div strong,
+.workforce-detail-header > div small {
+    display: block;
+}
+
+.workforce-card-header > div span,
+.workforce-detail-header > div span {
+    color: var(--muted-text);
+    font-size: 8px;
+    letter-spacing: 0.09em;
+}
+
+.workforce-card-header > div strong {
+    margin-top: 4px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.workforce-detail-header > div strong {
+    margin-top: 4px;
+    color: #fff;
+    font-size: 19px;
+}
+
+.workforce-detail-header > div small {
+    margin-top: 3px;
+    color: var(--muted-text);
+    font-size: 9px;
+}
+
+.workforce-status-pill {
+    display: inline-flex;
+    padding: 4px 7px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.workforce-status-pill.active {
+    background:
+        rgba(67, 209, 122, 0.12);
+    color: #43d17a;
+}
+
+.workforce-status-pill.inactive {
+    background:
+        rgba(255, 85, 85, 0.12);
+    color: #ff6b6b;
+}
+
+.workforce-card-info {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.workforce-card-info > div,
+.workforce-detail-grid > div {
+    padding: 9px;
+    border-radius: 7px;
+    background:
+        rgba(255, 255, 255, 0.025);
+}
+
+.workforce-card-info span,
+.workforce-card-info strong,
+.workforce-detail-grid span,
+.workforce-detail-grid strong {
+    display: block;
+}
+
+.workforce-card-info span,
+.workforce-detail-grid span {
+    color: var(--muted-text);
+    font-size: 7px;
+    letter-spacing: 0.08em;
+}
+
+.workforce-card-info strong,
+.workforce-detail-grid strong {
+    margin-top: 4px;
+    color: #fff;
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+.workforce-clearance {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 11px;
+    border-radius: 8px;
+}
+
+.workforce-clearance.cleared {
+    border:
+        1px solid rgba(67, 209, 122, 0.25);
+    background:
+        rgba(67, 209, 122, 0.05);
+    color: #43d17a;
+}
+
+.workforce-clearance.blocked {
+    border:
+        1px solid rgba(255, 85, 85, 0.25);
+    background:
+        rgba(255, 85, 85, 0.05);
+    color: #ff6b6b;
+}
+
+.workforce-clearance strong,
+.workforce-clearance small {
+    display: block;
+}
+
+.workforce-clearance strong {
+    font-size: 9px;
+}
+
+.workforce-clearance small {
+    margin-top: 3px;
+    font-size: 8px;
+    line-height: 1.4;
+}
+
+.workforce-detail-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 16px;
+}
+
+.workforce-assignment-list {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top:
+        1px solid rgba(255, 255, 255, 0.07);
+}
+
+.workforce-assignment-title {
+    margin-bottom: 8px;
+    color: var(--muted-text);
+    font-size: 8px;
+    letter-spacing: 0.09em;
+}
+
+.workforce-assignment-row {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.05);
+}
+
+.workforce-assignment-row strong,
+.workforce-assignment-row span {
+    display: block;
+}
+
+.workforce-assignment-row strong {
+    color: #fff;
+    font-size: 9px;
+}
+
+.workforce-assignment-row span {
+    margin-top: 2px;
+    color: var(--muted-text);
+    font-size: 8px;
+}
+
+.workforce-assignment-empty,
+.workforce-detail-empty,
+.workforce-shift-empty,
+.workforce-empty-state {
+    color: var(--muted-text);
+    font-size: 10px;
+}
+
+.workforce-shift-panel {
+    margin-top: 14px;
+}
+
+.workforce-shift-detail {
+    display: grid;
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+    gap: 9px;
+}
+
+.workforce-shift-detail > div {
+    padding: 10px;
+    border:
+        1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 7px;
+    background:
+        rgba(255, 255, 255, 0.02);
+}
+
+.workforce-shift-detail span,
+.workforce-shift-detail strong {
+    display: block;
+}
+
+.workforce-shift-detail span {
+    color: var(--muted-text);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+}
+
+.workforce-shift-detail strong {
+    margin-top: 4px;
+    color: #fff;
+    font-size: 10px;
+}
+
+.workforce-empty-state {
+    grid-column: 1 / -1;
+    padding: 24px;
+    text-align: center;
+}
+
+@media (max-width: 1050px) {
+    .workforce-page-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .workforce-shift-detail {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 800px) {
+    .workforce-kpi-grid,
+    .workforce-card-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .workforce-toolbar {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .workforce-kpi-grid,
+    .workforce-card-grid,
+    .workforce-card-info,
+    .workforce-detail-grid,
+    .workforce-assignment-row,
+    .workforce-shift-detail {
+        grid-template-columns: 1fr;
+    }
+}

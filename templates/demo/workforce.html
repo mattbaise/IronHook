@@ -8,7 +8,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>IronHook | Trucks</title>
+    <title>IronHook | Workforce</title>
 
     <link
         rel="stylesheet"
@@ -31,28 +31,16 @@
 
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item">◫ Overview</a>
+                <a href="/demo" class="nav-item">▦ Vessel Operations</a>
+                <a href="/demo/yard" class="nav-item">▤ Yard Map</a>
+                <a href="/demo/containers" class="nav-item">□ Containers</a>
+                <a href="/demo/equipment" class="nav-item">⌁ Equipment</a>
+                <a href="/demo/trucks" class="nav-item">▣ Trucks</a>
 
-                <a href="/demo" class="nav-item">
-                    ▦ Vessel Operations
+                <a href="/demo/workforce" class="nav-item active">
+                    ♙ Workforce
                 </a>
 
-                <a href="/demo/yard" class="nav-item">
-                    ▤ Yard Map
-                </a>
-
-                <a href="/demo/containers" class="nav-item">
-                    □ Containers
-                </a>
-
-                <a href="/demo/equipment" class="nav-item">
-                    ⌁ Equipment
-                </a>
-
-                <a href="/demo/trucks" class="nav-item active">
-                    ▣ Trucks
-                </a>
-
-                <a href="/demo/workforce" class="nav-item">♙ Workforce</a>
                 <a href="#" class="nav-item">✓ Assignments</a>
                 <a href="#" class="nav-item">⇄ Gate Activity</a>
                 <a href="#" class="nav-item">! Alerts</a>
@@ -79,180 +67,158 @@
                         IRONHOOK LIVE TERMINAL
                     </p>
 
-                    <h2>Trucks</h2>
+                    <h2>Workforce</h2>
                 </div>
 
                 <div class="topbar-right">
                     <div class="terminal-status">
                         <span class="status-dot"></span>
-                        Terminal Operational
+                        Workforce Systems Online
                     </div>
-
-                    <button
-                        class="start-button"
-                        id="startTruckSimulation"
-                    >
-                        ▶ Start Simulation
-                    </button>
                 </div>
             </header>
 
             <section class="demo-banner">
-                Ground Transportation Control
-                <span>Live Dispatch + Fleet Data</span>
+                Workforce Operations Control
+                <span>Live Worker + Shift Data</span>
             </section>
 
-            <section class="truck-kpi-grid">
+            <section class="workforce-kpi-grid">
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        Demo Trucks
+                        Total Workers
                     </span>
 
-                    <strong id="truckDemoTotal">
-                        0
-                    </strong>
+                    <strong id="workforceTotalCount">0</strong>
 
                     <small>
-                        Active dispatch fleet
+                        Registered workforce
                     </small>
                 </article>
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        Available
+                        Active Workers
                     </span>
 
-                    <strong id="truckAvailableCount">
-                        0
-                    </strong>
+                    <strong id="workforceActiveCount">0</strong>
 
                     <small>
-                        Ready for dispatch
+                        Cleared in workforce roster
                     </small>
                 </article>
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        In Motion
+                        Current Shift
                     </span>
 
-                    <strong id="truckActiveCount">
-                        0
-                    </strong>
+                    <strong id="workforceShiftName">—</strong>
 
-                    <small>
-                        Assigned or in transit
+                    <small id="workforceShiftTime">
+                        No active shift
                     </small>
                 </article>
 
                 <article class="metric-card">
                     <span class="metric-label">
-                        Fleet Exceptions
+                        Active Assignments
                     </span>
 
-                    <strong id="truckExceptionCount">
-                        0
-                    </strong>
+                    <strong id="workforceAssignmentCount">0</strong>
 
                     <small>
-                        Database trucks out of service
+                        Current move assignments
                     </small>
                 </article>
 
             </section>
 
-            <section class="truck-page-layout">
+            <section class="workforce-page-layout">
 
-                <article class="panel truck-dispatch-panel">
+                <article class="panel workforce-control-panel">
 
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">
-                                LIVE GROUND MOVEMENT
+                                TERMINAL WORKFORCE
                             </p>
 
-                            <h3>Terminal Truck Dispatch</h3>
-                        </div>
-
-                        <div class="yard-live-status">
-                            <span class="status-dot"></span>
-                            Live Simulation State
+                            <h3>Worker Roster</h3>
                         </div>
                     </div>
 
-                    <div class="truck-toolbar">
+                    <div class="workforce-toolbar">
+
                         <input
-                            id="truckSearch"
+                            id="workforceSearch"
                             type="text"
-                            placeholder="Search truck, driver or container"
+                            placeholder="Search worker, employee number or job"
                             autocomplete="off"
                         >
 
-                        <select id="truckStatusFilter">
+                        <select id="workforceStatusFilter">
                             <option value="ALL">
-                                All Statuses
+                                All Workers
                             </option>
 
-                            <option value="AVAILABLE">
-                                Available
+                            <option value="ACTIVE">
+                                Active
                             </option>
 
-                            <option value="ASSIGNED">
-                                Assigned
-                            </option>
-
-                            <option value="IN_TRANSIT">
-                                In Transit
+                            <option value="INACTIVE">
+                                Inactive
                             </option>
                         </select>
+
                     </div>
 
                     <div
-                        id="truckDispatchGrid"
-                        class="truck-dispatch-grid"
+                        id="workforceGrid"
+                        class="workforce-card-grid"
                     ></div>
 
                 </article>
 
-                <aside class="panel truck-detail-panel">
+                <aside class="panel workforce-detail-panel">
 
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">
-                                TRUCK DETAIL
+                                WORKER DETAIL
                             </p>
 
-                            <h3>Active Movement</h3>
+                            <h3>Workforce Profile</h3>
                         </div>
                     </div>
 
                     <div
-                        id="truckDetail"
-                        class="truck-detail-empty"
+                        id="workforceDetail"
+                        class="workforce-detail-empty"
                     >
-                        Select a truck to view its current assignment.
+                        Select a worker to view details.
                     </div>
 
                 </aside>
 
             </section>
 
-            <section class="panel truck-fleet-panel">
+            <section class="panel workforce-shift-panel">
 
                 <div class="panel-header">
                     <div>
                         <p class="eyebrow">
-                            EQUIPMENT DATABASE
+                            SHIFT OPERATIONS
                         </p>
 
-                        <h3>Registered Yard Truck Fleet</h3>
+                        <h3>Current Shift</h3>
                     </div>
                 </div>
 
                 <div
-                    id="truckFleetGrid"
-                    class="truck-fleet-grid"
+                    id="workforceShiftDetail"
+                    class="workforce-shift-detail"
                 ></div>
 
             </section>
@@ -261,7 +227,7 @@
     </div>
 
     <script
-        src="{{ url_for('static', filename='demo/trucks.js') }}"
+        src="{{ url_for('static', filename='demo/workforce.js') }}"
     ></script>
 </body>
 </html>

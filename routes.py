@@ -172,6 +172,106 @@ def yard_capacity():
     return jsonify({"blocks": rows})
 
 
+@api.get("/workers")
+def list_workers():
+    active_value = request.args.get("active")
+
+    parameters = []
+    where_clause = ""
+
+    if active_value is not None:
+        normalized = active_value.strip().lower()
+
+        if normalized not in {"true", "false"}:
+            return error_response(
+                "active must be true or false",
+                400,
+            )
+
+        where_clause = "WHERE active = %s"
+        parameters.append(
+            normalized == "true"
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT
+                    worker_id,
+                    employee_number,
+                    first_name,
+                    last_name,
+                    job_classification,
+                    union_local_code,
+                    active
+                FROM worker
+                {where_clause}
+                ORDER BY last_name, first_name
+                """,
+                parameters,
+            )
+
+            rows = cursor.fetchall()
+
+    return jsonify(
+        {
+            "count": len(rows),
+            "workers": rows,
+        }
+    )
+
+
+@api.get("/shifts")
+def list_shifts():
+    terminal_id = request.args.get("terminal_id")
+
+    parameters = []
+    where_clause = ""
+
+    if terminal_id is not None:
+        try:
+            terminal_id = require_positive_integer(
+                terminal_id,
+                "terminal_id",
+            )
+        except ValueError as error:
+            return error_response(
+                str(error),
+                400,
+            )
+
+        where_clause = "WHERE terminal_id = %s"
+        parameters.append(terminal_id)
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT
+                    shift_id,
+                    terminal_id,
+                    shift_name,
+                    starts_at,
+                    ends_at,
+                    shift_status
+                FROM work_shift
+                {where_clause}
+                ORDER BY starts_at DESC
+                """,
+                parameters,
+            )
+
+            rows = cursor.fetchall()
+
+    return jsonify(
+        {
+            "count": len(rows),
+            "shifts": rows,
+        }
+    )
+
+
 @api.get("/equipment")
 def list_equipment():
     terminal_id = request.args.get("terminal_id")
