@@ -335,6 +335,8 @@ async function showContainerDetails(containerId, containers) {
     }
 
     if (!container) {
+        selectedContainerId = null;
+
         result.innerHTML = `
             <strong>Container not found</strong>
             <span>
@@ -343,6 +345,8 @@ async function showContainerDetails(containerId, containers) {
         `;
         return;
     }
+
+    selectedContainerId = containerId;
 
     const destination =
         parseYardDestination(container.destination);
