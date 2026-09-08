@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>IronHook | Containers</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">◫ Overview</a>
+                <a href="/demo" class="nav-item">
+                    ▦ Vessel Operations
+                </a>
+                <a href="/demo/yard" class="nav-item">
+                    ▤ Yard Map
+                </a>
+                <a href="/demo/containers" class="nav-item active">
+                    □ Containers
+                </a>
+                <a href="#" class="nav-item">⌁ Equipment</a>
+                <a href="#" class="nav-item">▣ Trucks</a>
+                <a href="#" class="nav-item">♙ Workforce</a>
+                <a href="#" class="nav-item">✓ Assignments</a>
+                <a href="#" class="nav-item">⇄ Gate Activity</a>
+                <a href="#" class="nav-item">! Alerts</a>
+                <a href="#" class="nav-item">↗ Analytics</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+
+                <div class="demo-label">
+                    SIMULATED DATA
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">
+                        IRONHOOK LIVE TERMINAL
+                    </p>
+                    <h2>Containers</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Terminal Operational
+                    </div>
+
+                    <button
+                        class="start-button"
+                        id="startSimulation"
+                    >
+                        ▶ Start Simulation
+                    </button>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Interactive Product Demonstration
+                <span>Simulated Data</span>
+            </section>
+
+            <section class="container-kpi-grid">
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Total Containers
+                    </span>
+                    <strong id="containerTotalCount">12</strong>
+                    <small>Active demo inventory</small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        On Vessel
+                    </span>
+                    <strong id="containerOnVesselCount">12</strong>
+                    <small>Awaiting discharge</small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        In Motion
+                    </span>
+                    <strong id="containerInMotionCount">0</strong>
+                    <small>Truck or terminal transit</small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        In Yard
+                    </span>
+                    <strong id="containerInYardCount">0</strong>
+                    <small>Placed in assigned slot</small>
+                </article>
+            </section>
+
+            <section class="panel container-control-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">
+                            TERMINAL INVENTORY
+                        </p>
+                        <h3>Container Control</h3>
+                    </div>
+                </div>
+
+                <div class="container-toolbar">
+                    <input
+                        id="containerSearch"
+                        type="text"
+                        placeholder="Search container ID"
+                        autocomplete="off"
+                    >
+
+                    <select id="containerStatusFilter">
+                        <option value="ALL">
+                            All Statuses
+                        </option>
+                        <option value="ON_VESSEL">
+                            On Vessel
+                        </option>
+                        <option value="ON_TRUCK">
+                            On Truck
+                        </option>
+                        <option value="IN_TRANSIT">
+                            In Transit
+                        </option>
+                        <option value="IN_YARD">
+                            In Yard
+                        </option>
+                    </select>
+                </div>
+
+                <div class="container-table-wrap">
+                    <table class="container-inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Container</th>
+                                <th>Status</th>
+                                <th>Bay</th>
+                                <th>Crane</th>
+                                <th>Truck</th>
+                                <th>Destination</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="containerInventoryBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel container-detail-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">
+                            CONTAINER DETAILS
+                        </p>
+                        <h3>Movement & Assignment</h3>
+                    </div>
+                </div>
+
+                <div id="containerDetail">
+                    Select a container to view its details.
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/containers.js') }}"
+    ></script>
+</body>
+</html>

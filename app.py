@@ -32,6 +32,10 @@ def create_app():
     def yard_map_demo():
         return render_template("demo/yard_map.html")
 
+    @app.get("/demo/containers")
+    def containers_demo():
+        return render_template("demo/containers.html")
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404
