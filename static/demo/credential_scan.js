@@ -26,6 +26,35 @@ const auditDetails = document.getElementById(
     "auditDetails"
 );
 
+const credentialPayload = document.getElementById(
+    "credentialPayload"
+);
+
+const cameraVideo = document.getElementById(
+    "credentialCamera"
+);
+
+const startCameraButton = document.getElementById(
+    "startCameraButton"
+);
+
+const stopCameraButton = document.getElementById(
+    "stopCameraButton"
+);
+
+const cameraStatus = document.getElementById(
+    "cameraStatus"
+);
+
+const cameraPlaceholder = document.getElementById(
+    "cameraPlaceholder"
+);
+
+let cameraStream = null;
+let barcodeDetector = null;
+let scanLoopActive = false;
+let scanInProgress = false;
+
 
 function setText(id, value) {
     const element = document.getElementById(id);
@@ -158,104 +187,313 @@ function displayError(message) {
 }
 
 
+async function verifyCredential(payload) {
+    if (!payload) {
+        displayError(
+            "Credential payload is required."
+        );
+
+        return;
+    }
+
+    resetResult();
+
+    const scanType =
+        document
+            .getElementById(
+                "scanType"
+            )
+            .value;
+
+    const terminalValue =
+        document
+            .getElementById(
+                "terminalId"
+            )
+            .value;
+
+    const deviceCode =
+        document
+            .getElementById(
+                "deviceCode"
+            )
+            .value
+            .trim();
+
+    const locationLabel =
+        document
+            .getElementById(
+                "locationLabel"
+            )
+            .value
+            .trim();
+
+    const requestBody = {
+        payload,
+        scan_type: scanType,
+        device_code:
+            deviceCode || null,
+        location_label:
+            locationLabel || null,
+    };
+
+    if (terminalValue) {
+        requestBody.terminal_id =
+            Number(terminalValue);
+    }
+
+    try {
+        const response = await fetch(
+            "/api/credentials/scan",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                        "application/json",
+                },
+                body: JSON.stringify(
+                    requestBody
+                ),
+            }
+        );
+
+        const data =
+            await response.json();
+
+        if (
+            response.ok
+            || data.scan_result
+        ) {
+            displayResult(data);
+            return;
+        }
+
+        displayError(
+            data.error
+            || "Credential scan failed."
+        );
+    } catch (error) {
+        console.error(
+            "Credential scan failed:",
+            error
+        );
+
+        displayError(
+            "Unable to reach the credential service."
+        );
+    }
+}
+
+
+async function stopCamera() {
+    scanLoopActive = false;
+
+    if (cameraStream) {
+        for (
+            const track
+            of cameraStream.getTracks()
+        ) {
+            track.stop();
+        }
+    }
+
+    cameraStream = null;
+
+    cameraVideo.srcObject = null;
+
+    cameraPlaceholder.classList.remove(
+        "hidden"
+    );
+
+    startCameraButton.classList.remove(
+        "hidden"
+    );
+
+    stopCameraButton.classList.add(
+        "hidden"
+    );
+
+    cameraStatus.textContent =
+        "Camera inactive";
+}
+
+
+async function scanCameraFrame() {
+    if (
+        !scanLoopActive
+        || !barcodeDetector
+        || !cameraStream
+    ) {
+        return;
+    }
+
+    if (
+        cameraVideo.readyState >= 2
+        && !scanInProgress
+    ) {
+        try {
+            const codes =
+                await barcodeDetector.detect(
+                    cameraVideo
+                );
+
+            if (codes.length > 0) {
+                const payload =
+                    codes[0].rawValue;
+
+                if (
+                    payload
+                    && payload.startsWith(
+                        "IRONHOOK:CREDENTIAL:"
+                    )
+                ) {
+                    scanInProgress = true;
+
+                    credentialPayload.value =
+                        payload;
+
+                    cameraStatus.textContent =
+                        "Credential detected";
+
+                    await stopCamera();
+
+                    await verifyCredential(
+                        payload
+                    );
+
+                    scanInProgress = false;
+
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error(
+                "QR detection failed:",
+                error
+            );
+        }
+    }
+
+    if (scanLoopActive) {
+        requestAnimationFrame(
+            scanCameraFrame
+        );
+    }
+}
+
+
+async function startCamera() {
+    if (
+        !("BarcodeDetector" in window)
+    ) {
+        displayError(
+            "This browser does not support built-in QR scanning. Use manual credential entry for now."
+        );
+
+        cameraStatus.textContent =
+            "QR scanner unsupported";
+
+        return;
+    }
+
+    try {
+        barcodeDetector =
+            new BarcodeDetector(
+                {
+                    formats: [
+                        "qr_code",
+                    ],
+                }
+            );
+
+        cameraStream =
+            await navigator.mediaDevices
+                .getUserMedia(
+                    {
+                        video: {
+                            facingMode:
+                                {
+                                    ideal:
+                                        "environment",
+                                },
+                        },
+                        audio: false,
+                    }
+                );
+
+        cameraVideo.srcObject =
+            cameraStream;
+
+        await cameraVideo.play();
+
+        cameraPlaceholder.classList.add(
+            "hidden"
+        );
+
+        startCameraButton.classList.add(
+            "hidden"
+        );
+
+        stopCameraButton.classList.remove(
+            "hidden"
+        );
+
+        cameraStatus.textContent =
+            "Scanning for IronHook credential...";
+
+        scanLoopActive = true;
+
+        requestAnimationFrame(
+            scanCameraFrame
+        );
+    } catch (error) {
+        console.error(
+            "Camera start failed:",
+            error
+        );
+
+        cameraStatus.textContent =
+            "Camera unavailable";
+
+        displayError(
+            "Unable to access the camera. Check browser camera permissions."
+        );
+
+        await stopCamera();
+    }
+}
+
+
 form.addEventListener(
     "submit",
     async (event) => {
         event.preventDefault();
 
-        resetResult();
-
         const payload =
-            document
-                .getElementById(
-                    "credentialPayload"
-                )
+            credentialPayload
                 .value
                 .trim();
 
-        const scanType =
-            document
-                .getElementById(
-                    "scanType"
-                )
-                .value;
-
-        const terminalValue =
-            document
-                .getElementById(
-                    "terminalId"
-                )
-                .value;
-
-        const deviceCode =
-            document
-                .getElementById(
-                    "deviceCode"
-                )
-                .value
-                .trim();
-
-        const locationLabel =
-            document
-                .getElementById(
-                    "locationLabel"
-                )
-                .value
-                .trim();
-
-        const requestBody = {
-            payload,
-            scan_type: scanType,
-            device_code:
-                deviceCode || null,
-            location_label:
-                locationLabel || null,
-        };
-
-        if (terminalValue) {
-            requestBody.terminal_id =
-                Number(terminalValue);
-        }
-
-        try {
-            const response = await fetch(
-                "/api/credentials/scan",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-                    },
-                    body: JSON.stringify(
-                        requestBody
-                    ),
-                }
-            );
-
-            const data =
-                await response.json();
-
-            if (
-                response.ok
-                || data.scan_result
-            ) {
-                displayResult(data);
-                return;
-            }
-
-            displayError(
-                data.error
-                || "Credential scan failed."
-            );
-        } catch (error) {
-            console.error(
-                "Credential scan failed:",
-                error
-            );
-
-            displayError(
-                "Unable to reach the credential service."
-            );
-        }
+        await verifyCredential(
+            payload
+        );
     }
+);
+
+
+startCameraButton.addEventListener(
+    "click",
+    startCamera
+);
+
+
+stopCameraButton.addEventListener(
+    "click",
+    stopCamera
+);
+
+
+window.addEventListener(
+    "beforeunload",
+    stopCamera
 );
