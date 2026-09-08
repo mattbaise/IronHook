@@ -242,6 +242,26 @@ async function verifyCredential(payload) {
             Number(terminalValue);
     }
 
+    if (scanType === "EQUIPMENT_ASSIGNMENT") {
+        const equipmentValue =
+            document
+                .getElementById(
+                    "equipmentId"
+                )
+                ?.value;
+
+        if (!equipmentValue) {
+            displayError(
+                "Select equipment before scanning."
+            );
+
+            return;
+        }
+
+        requestBody.equipment_id =
+            Number(equipmentValue);
+    }
+
     try {
         const response = await fetch(
             "/api/credentials/scan",
@@ -497,3 +517,84 @@ window.addEventListener(
     "beforeunload",
     stopCamera
 );
+
+
+async function loadEquipmentOptions() {
+    const equipmentSelect =
+        document.getElementById("equipmentId");
+
+    if (!equipmentSelect) {
+        return;
+    }
+
+    try {
+        const response =
+            await fetch("/api/equipment");
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load equipment"
+            );
+        }
+
+        const data = await response.json();
+
+        equipmentSelect.innerHTML = `
+            <option value="">
+                Select equipment
+            </option>
+            ${data.equipment.map(
+                (equipment) => `
+                    <option
+                        value="${equipment.equipment_id}"
+                    >
+                        ${equipment.equipment_code}
+                        — ${equipment.equipment_type}
+                        (${equipment.operating_status})
+                    </option>
+                `
+            ).join("")}
+        `;
+    } catch (error) {
+        console.error(
+            "Equipment load failed:",
+            error
+        );
+
+        equipmentSelect.innerHTML = `
+            <option value="">
+                Equipment unavailable
+            </option>
+        `;
+    }
+}
+
+
+function updateEquipmentField() {
+    const scanType =
+        document.getElementById("scanType");
+
+    const equipmentField =
+        document.getElementById("equipmentField");
+
+    if (!scanType || !equipmentField) {
+        return;
+    }
+
+    equipmentField.classList.toggle(
+        "hidden",
+        scanType.value !==
+            "EQUIPMENT_ASSIGNMENT"
+    );
+}
+
+
+document
+    .getElementById("scanType")
+    ?.addEventListener(
+        "change",
+        updateEquipmentField
+    );
+
+loadEquipmentOptions();
+updateEquipmentField();

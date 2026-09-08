@@ -1061,6 +1061,10 @@ def scan_worker_credential():
         "terminal_id"
     )
 
+    equipment_id = data.get(
+        "equipment_id"
+    )
+
     valid_scan_types = {
         "BADGE_IN",
         "HIRE_SELECTION",
@@ -1086,6 +1090,18 @@ def scan_worker_credential():
             "Credential signing is not configured",
             503,
         )
+
+    if scan_type == "EQUIPMENT_ASSIGNMENT":
+        try:
+            equipment_id = require_positive_integer(
+                equipment_id,
+                "equipment_id",
+            )
+        except ValueError as error:
+            return error_response(
+                str(error),
+                400,
+            )
 
     if terminal_id is not None:
         try:
@@ -1209,13 +1225,9 @@ def scan_worker_credential():
                 and not_expired
             )
 
-            scan_result = (
-                "GRANTED"
-                if credential_allowed
-                else "DENIED"
-            )
-
             denial_reason = None
+            equipment = None
+            required_certification = None
 
             if not version_matches:
                 denial_reason = (
@@ -1238,6 +1250,120 @@ def scan_worker_credential():
                 denial_reason = (
                     "Credential has expired"
                 )
+
+            if (
+                credential_allowed
+                and scan_type
+                == "EQUIPMENT_ASSIGNMENT"
+            ):
+                cursor.execute(
+                    """
+                    SELECT
+                        equipment_id,
+                        equipment_code,
+                        equipment_type,
+                        operating_status
+                    FROM equipment
+                    WHERE equipment_id = %s
+                    """,
+                    (equipment_id,),
+                )
+
+                equipment = cursor.fetchone()
+
+                if equipment is None:
+                    credential_allowed = False
+                    denial_reason = (
+                        "Equipment not found"
+                    )
+                elif equipment[
+                    "operating_status"
+                ] in {
+                    "DOWN",
+                    "MAINTENANCE",
+                    "RESTRICTED",
+                }:
+                    credential_allowed = False
+                    denial_reason = (
+                        "Equipment is not cleared "
+                        "for normal service"
+                    )
+                else:
+                    certification_map = {
+                        "STS_CRANE":
+                            "STS-CRANE",
+                        "RTG":
+                            "RTG-OPERATOR",
+                        "TOP_PICK":
+                            "TOP-PICK",
+                        "YARD_TRUCK":
+                            "YARD-TRACTOR",
+                    }
+
+                    required_certification = (
+                        certification_map.get(
+                            equipment[
+                                "equipment_type"
+                            ]
+                        )
+                    )
+
+                    if required_certification:
+                        cursor.execute(
+                            """
+                            SELECT
+                                certification_code,
+                                certification_status,
+                                expires_at
+                            FROM worker_certification
+                            WHERE worker_id = %s
+                              AND certification_code = %s
+                            """,
+                            (
+                                credential[
+                                    "worker_id"
+                                ],
+                                required_certification,
+                            ),
+                        )
+
+                        certification = (
+                            cursor.fetchone()
+                        )
+
+                        certification_valid = (
+                            certification
+                            is not None
+                            and certification[
+                                "certification_status"
+                            ] == "ACTIVE"
+                            and (
+                                certification[
+                                    "expires_at"
+                                ] is None
+                                or certification[
+                                    "expires_at"
+                                ]
+                                >= datetime.now(
+                                    timezone.utc
+                                ).date()
+                            )
+                        )
+
+                        if not certification_valid:
+                            credential_allowed = False
+                            denial_reason = (
+                                "Required certification "
+                                f"{required_certification} "
+                                "is missing, inactive, "
+                                "or expired"
+                            )
+
+            scan_result = (
+                "GRANTED"
+                if credential_allowed
+                else "DENIED"
+            )
 
             cursor.execute(
                 """

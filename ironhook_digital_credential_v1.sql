@@ -299,6 +299,17 @@ VALUES
     (
         SELECT worker_id
         FROM worker
+        WHERE employee_number = 'JR1002'
+    ),
+    'RTG-OPERATOR',
+    'Rubber-Tired Gantry Crane Operator',
+    '2026-01-15',
+    '2027-01-15'
+),
+(
+    (
+        SELECT worker_id
+        FROM worker
         WHERE employee_number = 'SG1003'
     ),
     'TOP-PICK',
