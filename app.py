@@ -48,6 +48,12 @@ def create_app():
     def workforce_demo():
         return render_template("demo/workforce.html")
 
+    @app.get("/demo/credential-scan")
+    def credential_scan_demo():
+        return render_template(
+            "demo/credential_scan.html"
+        )
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404
