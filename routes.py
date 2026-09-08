@@ -172,6 +172,69 @@ def yard_capacity():
     return jsonify({"blocks": rows})
 
 
+@api.get("/workers/<int:worker_id>/credential")
+def worker_credential_detail(worker_id):
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    w.worker_id,
+                    w.employee_number,
+                    w.first_name,
+                    w.last_name,
+                    w.job_classification,
+                    w.union_local_code,
+                    w.union_status,
+                    w.union_join_year,
+                    w.active,
+                    wc.credential_id,
+                    wc.credential_code,
+                    wc.credential_status,
+                    wc.issued_at,
+                    wc.expires_at
+                FROM worker w
+                LEFT JOIN worker_credential wc
+                    ON wc.worker_id = w.worker_id
+                WHERE w.worker_id = %s
+                """,
+                (worker_id,),
+            )
+
+            worker = cursor.fetchone()
+
+            if worker is None:
+                return error_response(
+                    "Worker not found",
+                    404,
+                )
+
+            cursor.execute(
+                """
+                SELECT
+                    certification_id,
+                    certification_code,
+                    certification_name,
+                    issued_at,
+                    expires_at,
+                    certification_status
+                FROM worker_certification
+                WHERE worker_id = %s
+                ORDER BY certification_name
+                """,
+                (worker_id,),
+            )
+
+            certifications = cursor.fetchall()
+
+    return jsonify(
+        {
+            "worker": worker,
+            "certifications": certifications,
+        }
+    )
+
+
 @api.get("/workers")
 def list_workers():
     active_value = request.args.get("active")
@@ -204,6 +267,8 @@ def list_workers():
                     last_name,
                     job_classification,
                     union_local_code,
+                    union_status,
+                    union_join_year,
                     active
                 FROM worker
                 {where_clause}

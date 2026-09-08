@@ -2991,3 +2991,232 @@ button.yard-list-item {
         grid-template-columns: 1fr;
     }
 }
+
+/* ---------------------------------------------------------
+   Digital Credential
+--------------------------------------------------------- */
+
+.digital-credential-panel {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top:
+        1px solid rgba(255, 255, 255, 0.08);
+}
+
+.digital-credential-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.digital-credential-header > div span,
+.digital-credential-header > div strong {
+    display: block;
+}
+
+.digital-credential-header > div span {
+    color: var(--muted-text);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+}
+
+.digital-credential-header > div strong {
+    margin-top: 4px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.credential-status-pill {
+    display: inline-flex;
+    padding: 4px 7px;
+    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.credential-status-pill.active {
+    background:
+        rgba(67, 209, 122, 0.12);
+    color: #43d17a;
+}
+
+.credential-status-pill.inactive {
+    background:
+        rgba(255, 85, 85, 0.12);
+    color: #ff6b6b;
+}
+
+.digital-credential-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.digital-credential-grid > div {
+    padding: 9px;
+    border:
+        1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 7px;
+    background:
+        rgba(255, 255, 255, 0.02);
+}
+
+.digital-credential-grid span,
+.digital-credential-grid strong {
+    display: block;
+}
+
+.digital-credential-grid span {
+    color: var(--muted-text);
+    font-size: 7px;
+    letter-spacing: 0.08em;
+}
+
+.digital-credential-grid strong {
+    margin-top: 4px;
+    color: #fff;
+    font-size: 9px;
+}
+
+.credential-qr-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px;
+    border:
+        1px solid rgba(73, 196, 255, 0.16);
+    border-radius: 8px;
+    background:
+        rgba(73, 196, 255, 0.035);
+}
+
+.credential-qr-box {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border:
+        1px solid rgba(73, 196, 255, 0.35);
+    background:
+        repeating-linear-gradient(
+            45deg,
+            rgba(73, 196, 255, 0.14),
+            rgba(73, 196, 255, 0.14) 3px,
+            rgba(255, 255, 255, 0.03) 3px,
+            rgba(255, 255, 255, 0.03) 6px
+        );
+    color: #7fd8ff;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.credential-qr-preview strong,
+.credential-qr-preview small {
+    display: block;
+}
+
+.credential-qr-preview strong {
+    color: #fff;
+    font-size: 9px;
+}
+
+.credential-qr-preview small {
+    margin-top: 3px;
+    color: var(--muted-text);
+    font-size: 8px;
+}
+
+.certification-section {
+    margin-top: 14px;
+}
+
+.certification-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.certification-title span {
+    color: var(--muted-text);
+    font-size: 8px;
+    letter-spacing: 0.09em;
+}
+
+.certification-title strong {
+    color: #7fd8ff;
+    font-size: 9px;
+}
+
+.certification-row {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        100px
+        auto;
+    gap: 8px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.05);
+}
+
+.certification-row strong,
+.certification-row span {
+    display: block;
+}
+
+.certification-row > div:first-child strong {
+    color: #fff;
+    font-size: 9px;
+}
+
+.certification-row > div:first-child span,
+.certification-row > div:nth-child(2) span {
+    margin-top: 2px;
+    color: var(--muted-text);
+    font-size: 7px;
+}
+
+.certification-row > div:nth-child(2) strong {
+    margin-top: 2px;
+    color: #fff;
+    font-size: 8px;
+}
+
+.certification-status-pill {
+    padding: 4px 6px;
+    border-radius: 999px;
+    font-size: 7px;
+    font-weight: 700;
+}
+
+.certification-status-pill.active {
+    background:
+        rgba(67, 209, 122, 0.12);
+    color: #43d17a;
+}
+
+.certification-status-pill.suspended,
+.certification-status-pill.revoked {
+    background:
+        rgba(255, 85, 85, 0.12);
+    color: #ff6b6b;
+}
+
+.certification-empty {
+    color: var(--muted-text);
+    font-size: 9px;
+}
+
+@media (max-width: 600px) {
+    .digital-credential-grid,
+    .certification-row {
+        grid-template-columns: 1fr;
+    }
+}

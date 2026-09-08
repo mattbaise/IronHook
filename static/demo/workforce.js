@@ -6,6 +6,19 @@ let workforceState = {
 
 let selectedWorkerId = null;
 
+async function fetchWorkerCredential(workerId) {
+    const response = await fetch(
+        `/api/workers/${workerId}/credential`
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to load worker credential");
+    }
+
+    return response.json();
+}
+
+
 async function fetchWorkers() {
     const response = await fetch("/api/workers");
 
@@ -259,7 +272,7 @@ function renderWorkers() {
     });
 }
 
-function selectWorker(worker) {
+async function selectWorker(worker) {
     selectedWorkerId =
         worker.worker_id;
 
@@ -271,6 +284,27 @@ function selectWorker(worker) {
 
     const assignments =
         getWorkerAssignments(worker);
+
+    let credential = null;
+    let certifications = [];
+
+    try {
+        const credentialResponse =
+            await fetchWorkerCredential(
+                worker.worker_id
+            );
+
+        credential =
+            credentialResponse.worker;
+
+        certifications =
+            credentialResponse.certifications;
+    } catch (error) {
+        console.error(
+            "Credential load failed:",
+            error
+        );
+    }
 
     detail.className = "";
 
@@ -362,6 +396,153 @@ function selectWorker(worker) {
                 <strong>
                     ${assignments.length}
                 </strong>
+            </div>
+
+        </div>
+
+        <div class="digital-credential-panel">
+
+            <div class="digital-credential-header">
+
+                <div>
+                    <span>DIGITAL CREDENTIAL</span>
+
+                    <strong>
+                        ${credential?.credential_code || "Not Issued"}
+                    </strong>
+                </div>
+
+                <span class="
+                    credential-status-pill
+                    ${
+                        credential?.credential_status === "ACTIVE"
+                            ? "active"
+                            : "inactive"
+                    }
+                ">
+                    ${credential?.credential_status || "Unavailable"}
+                </span>
+
+            </div>
+
+            <div class="digital-credential-grid">
+
+                <div>
+                    <span>UNION STATUS</span>
+
+                    <strong>
+                        ${
+                            credential?.union_status
+                                ? credential.union_status
+                                    .replaceAll("_", " ")
+                                : "—"
+                        }
+                    </strong>
+                </div>
+
+                <div>
+                    <span>YEAR JOINED</span>
+
+                    <strong>
+                        ${credential?.union_join_year || "—"}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>UNION LOCAL</span>
+
+                    <strong>
+                        ${credential?.union_local_code || "—"}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>CREDENTIAL STATUS</span>
+
+                    <strong>
+                        ${credential?.credential_status || "—"}
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="credential-qr-preview">
+                <div class="credential-qr-box">
+                    <span>IH</span>
+                </div>
+
+                <div>
+                    <strong>
+                        Worker QR Credential
+                    </strong>
+
+                    <small>
+                        Secure credential reference
+                        ${credential?.credential_code || ""}
+                    </small>
+                </div>
+            </div>
+
+            <div class="certification-section">
+
+                <div class="certification-title">
+                    <span>CERTIFICATIONS</span>
+
+                    <strong>
+                        ${certifications.length}
+                    </strong>
+                </div>
+
+                ${
+                    certifications.length === 0
+                        ? `
+                            <div class="certification-empty">
+                                No certifications recorded.
+                            </div>
+                        `
+                        : certifications.map(
+                            (certification) => `
+                                <div class="certification-row">
+
+                                    <div>
+                                        <strong>
+                                            ${certification.certification_name}
+                                        </strong>
+
+                                        <span>
+                                            ${certification.certification_code}
+                                        </span>
+                                    </div>
+
+                                    <div>
+                                        <span>EXPIRES</span>
+
+                                        <strong>
+                                            ${
+                                                certification.expires_at
+                                                    ? new Date(
+                                                        certification.expires_at
+                                                    ).toLocaleDateString()
+                                                    : "No Expiration"
+                                            }
+                                        </strong>
+                                    </div>
+
+                                    <span class="
+                                        certification-status-pill
+                                        ${
+                                            certification.certification_status
+                                                .toLowerCase()
+                                        }
+                                    ">
+                                        ${certification.certification_status}
+                                    </span>
+
+                                </div>
+                            `
+                        ).join("")
+                }
+
             </div>
 
         </div>
