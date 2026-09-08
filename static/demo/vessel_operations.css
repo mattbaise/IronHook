@@ -3131,6 +3131,36 @@ button.yard-list-item {
     font-size: 8px;
 }
 
+.credential-rotate-button {
+    margin-top: 12px;
+    padding: 8px 14px;
+    border: 1px solid rgba(44, 197, 255, 0.45);
+    border-radius: 6px;
+    background: rgba(44, 197, 255, 0.08);
+    color: #8edfff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.credential-rotate-button:hover {
+    background: rgba(44, 197, 255, 0.16);
+    border-color: rgba(44, 197, 255, 0.8);
+    color: #ffffff;
+}
+
+.credential-rotate-button:focus-visible {
+    outline: 2px solid #2cc5ff;
+    outline-offset: 2px;
+}
+
+
 .certification-section {
     margin-top: 14px;
 }

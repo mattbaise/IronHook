@@ -114,6 +114,27 @@ function formatDateTime(value) {
     );
 }
 
+function formatDateOnly(value) {
+    if (!value) {
+        return "No Expiration";
+    }
+
+    const datePart =
+        String(value).split("T")[0];
+
+    const parts =
+        datePart.split("-");
+
+    if (parts.length !== 3) {
+        return value;
+    }
+
+    const [year, month, day] = parts;
+
+    return `${Number(month)}/${Number(day)}/${year}`;
+}
+
+
 function updateWorkforceKpis() {
     const workers = workforceState.workers;
 
@@ -532,6 +553,14 @@ async function selectWorker(worker) {
                         Secure credential reference
                         ${credential?.credential_code || ""}
                     </small>
+
+                    <button
+                        type="button"
+                        class="credential-rotate-button"
+                        onclick="rotateWorkerCredential(${worker.worker_id})"
+                    >
+                        Rotate Credential
+                    </button>
                 </div>
             </div>
 
@@ -571,11 +600,9 @@ async function selectWorker(worker) {
 
                                         <strong>
                                             ${
-                                                certification.expires_at
-                                                    ? new Date(
-                                                        certification.expires_at
-                                                    ).toLocaleDateString()
-                                                    : "No Expiration"
+                                                formatDateOnly(
+                                                    certification.expires_at
+                                                )
                                             }
                                         </strong>
                                     </div>
@@ -764,3 +791,72 @@ document.addEventListener(
     "DOMContentLoaded",
     loadWorkforcePage
 );
+
+
+async function rotateWorkerCredential(workerId) {
+    const confirmed = window.confirm(
+        "Rotate this worker's Digital Credential?\n\n"
+        + "The current QR will immediately stop working."
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/api/workers/${workerId}/credential/qr/rotate`,
+            {
+                method: "POST",
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Credential rotation failed"
+            );
+        }
+
+        const blob = await response.blob();
+
+        const qrImage = document.getElementById(
+            "workerCredentialQr"
+        );
+
+        if (!qrImage) {
+            return;
+        }
+
+        if (qrImage.dataset.objectUrl) {
+            URL.revokeObjectURL(
+                qrImage.dataset.objectUrl
+            );
+        }
+
+        const objectUrl =
+            URL.createObjectURL(blob);
+
+        qrImage.dataset.objectUrl =
+            objectUrl;
+
+        qrImage.src = objectUrl;
+
+        qrImage.classList.add(
+            "loaded"
+        );
+
+        window.alert(
+            "Credential rotated successfully. "
+            + "The previous QR is now invalid."
+        );
+    } catch (error) {
+        console.error(
+            "Credential rotation failed:",
+            error
+        );
+
+        window.alert(
+            "Unable to rotate credential."
+        );
+    }
+}
