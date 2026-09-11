@@ -530,9 +530,28 @@ def start_assignment(assignment_id):
     body = request.get_json(silent=True) or {}
 
     try:
-        worker_id = require_positive_integer(body.get("worker_id"), "worker_id")
+        worker_id = require_positive_integer(
+            body.get("worker_id"),
+            "worker_id",
+        )
+
+        credential_scan_event_id = (
+            body.get("credential_scan_event_id")
+        )
+
+        if credential_scan_event_id is not None:
+            credential_scan_event_id = (
+                require_positive_integer(
+                    credential_scan_event_id,
+                    "credential_scan_event_id",
+                )
+            )
+
     except ValueError as error:
-        return error_response(str(error), 400)
+        return error_response(
+            str(error),
+            400,
+        )
 
     now = datetime.now(timezone.utc)
 
@@ -569,7 +588,153 @@ def start_assignment(assignment_id):
                     return error_response("Assigned equipment is not cleared for normal service", 409)
 
                 if assignment["worker_id"] not in {None, worker_id}:
-                    return error_response("Assignment belongs to another worker", 403)
+                    return error_response(
+                        "Assignment belongs to another worker",
+                        403,
+                    )
+
+                if assignment["equipment_id"]:
+                    if credential_scan_event_id is None:
+                        return error_response(
+                            (
+                                "A granted equipment credential scan "
+                                "is required to start this assignment"
+                            ),
+                            403,
+                        )
+
+                    cursor.execute(
+                        """
+                        SELECT
+                            cse.scan_event_id,
+                            cse.scan_type,
+                            cse.scan_result,
+                            cse.scanned_at,
+                            cse.details,
+                            cse.consumed_at,
+                            cse.consumed_by_assignment_id,
+                            wc.worker_id
+                        FROM credential_scan_event cse
+                        JOIN worker_credential wc
+                            ON wc.credential_id =
+                               cse.credential_id
+                        WHERE cse.scan_event_id = %s
+                        FOR UPDATE OF cse
+                        """,
+                        (
+                            credential_scan_event_id,
+                        ),
+                    )
+
+                    scan_event = cursor.fetchone()
+
+                    if not scan_event:
+                        return error_response(
+                            "Credential scan event not found",
+                            403,
+                        )
+
+                    if (
+                        scan_event["scan_type"]
+                        != "EQUIPMENT_ASSIGNMENT"
+                    ):
+                        return error_response(
+                            (
+                                "Credential scan is not an "
+                                "equipment authorization"
+                            ),
+                            403,
+                        )
+
+                    if (
+                        scan_event["scan_result"]
+                        != "GRANTED"
+                    ):
+                        return error_response(
+                            "Credential scan was denied",
+                            403,
+                        )
+
+                    if (
+                        scan_event["worker_id"]
+                        != worker_id
+                    ):
+                        return error_response(
+                            (
+                                "Credential scan belongs "
+                                "to another worker"
+                            ),
+                            403,
+                        )
+
+                    scan_equipment_id = (
+                        scan_event["details"] or {}
+                    ).get("equipment_id")
+
+                    if (
+                        scan_equipment_id
+                        != assignment["equipment_id"]
+                    ):
+                        return error_response(
+                            (
+                                "Credential scan was granted "
+                                "for different equipment"
+                            ),
+                            403,
+                        )
+
+                    scan_age_seconds = (
+                        now
+                        - scan_event["scanned_at"]
+                    ).total_seconds()
+
+                    if (
+                        scan_age_seconds < 0
+                        or scan_age_seconds > 300
+                    ):
+                        return error_response(
+                            (
+                                "Equipment credential scan "
+                                "has expired"
+                            ),
+                            403,
+                        )
+
+                    if scan_event["consumed_at"] is not None:
+                        return error_response(
+                            (
+                                "Equipment credential scan "
+                                "has already been used"
+                            ),
+                            409,
+                        )
+
+                    cursor.execute(
+                        """
+                        UPDATE credential_scan_event
+                        SET consumed_at = %s,
+                            consumed_by_assignment_id = %s
+                        WHERE scan_event_id = %s
+                          AND consumed_at IS NULL
+                        RETURNING scan_event_id
+                        """,
+                        (
+                            now,
+                            assignment_id,
+                            credential_scan_event_id,
+                        ),
+                    )
+
+                    consumed_scan = cursor.fetchone()
+
+                    if consumed_scan is None:
+                        return error_response(
+                            (
+                                "Equipment credential scan "
+                                "has already been used"
+                            ),
+                            409,
+                        )
 
                 cursor.execute(
                     """
@@ -603,11 +768,19 @@ def start_assignment(assignment_id):
                     SELECT
                         ws.terminal_id, %s, 'MOVE_ASSIGNMENT', %s,
                         'ASSIGNMENT_STARTED', 'Worker accepted and started assignment',
-                        jsonb_build_object('status', 'IN_PROGRESS')
+                        jsonb_build_object(
+                            'status', 'IN_PROGRESS',
+                            'credential_scan_event_id', %s
+                        )
                     FROM work_shift ws
                     WHERE ws.shift_id = %s
                     """,
-                    (worker_id, assignment_id, assignment["shift_id"]),
+                    (
+                        worker_id,
+                        assignment_id,
+                        credential_scan_event_id,
+                        assignment["shift_id"],
+                    ),
                 )
 
     except errors.ForeignKeyViolation:
