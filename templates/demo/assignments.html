@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>IronHook | Assignments</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">◫ Overview</a>
+                <a href="/demo" class="nav-item">▦ Vessel Operations</a>
+                <a href="/demo/yard" class="nav-item">▤ Yard Map</a>
+                <a href="/demo/containers" class="nav-item">□ Containers</a>
+                <a href="/demo/equipment" class="nav-item">⌁ Equipment</a>
+                <a href="/demo/trucks" class="nav-item">▣ Trucks</a>
+                <a href="/demo/workforce" class="nav-item">♙ Workforce</a>
+
+                <a href="/demo/assignments" class="nav-item active">
+                    ✓ Assignments
+                </a>
+
+                <a href="#" class="nav-item">⇄ Gate Activity</a>
+                <a href="#" class="nav-item">! Alerts</a>
+                <a href="#" class="nav-item">↗ Analytics</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+
+                <div class="demo-label">
+                    SIMULATED DATA
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">
+                        IRONHOOK LIVE TERMINAL
+                    </p>
+
+                    <h2>Assignments</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Dispatch Systems Online
+                    </div>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Assignment Operations Control
+                <span>Live Dispatch + Move Queue</span>
+            </section>
+
+            <section class="workforce-kpi-grid">
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Active Assignments
+                    </span>
+
+                    <strong id="assignmentActiveCount">0</strong>
+
+                    <small>
+                        Current terminal moves
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        In Progress
+                    </span>
+
+                    <strong id="assignmentProgressCount">0</strong>
+
+                    <small>
+                        Moves currently underway
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Queued
+                    </span>
+
+                    <strong id="assignmentQueuedCount">0</strong>
+
+                    <small>
+                        Waiting for dispatch
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Safety / Hold
+                    </span>
+
+                    <strong id="assignmentSafetyCount">0</strong>
+
+                    <small>
+                        Requires operational attention
+                    </small>
+                </article>
+
+            </section>
+
+            <section class="workforce-page-layout">
+
+                <article class="panel workforce-control-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                DISPATCH QUEUE
+                            </p>
+
+                            <h3>Move Assignments</h3>
+                        </div>
+
+                        <button
+                            id="assignmentRefreshButton"
+                            type="button"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div class="workforce-toolbar">
+
+                        <input
+                            id="assignmentSearch"
+                            type="text"
+                            placeholder="Search container, worker or equipment"
+                            autocomplete="off"
+                        >
+
+                        <select id="assignmentStatusFilter">
+                            <option value="ALL">
+                                All Statuses
+                            </option>
+
+                            <option value="QUEUED">
+                                Queued
+                            </option>
+
+                            <option value="ASSIGNED">
+                                Assigned
+                            </option>
+
+                            <option value="ACCEPTED">
+                                Accepted
+                            </option>
+
+                            <option value="IN_PROGRESS">
+                                In Progress
+                            </option>
+
+                            <option value="PAUSED">
+                                Paused
+                            </option>
+                        </select>
+
+                    </div>
+
+                    <div
+                        id="assignmentGrid"
+                        class="workforce-card-grid"
+                    ></div>
+
+                </article>
+
+                <aside class="panel workforce-detail-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                ASSIGNMENT DETAIL
+                            </p>
+
+                            <h3>Move Control</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        id="assignmentDetail"
+                        class="workforce-detail-empty"
+                    >
+                        Select an assignment to view move details.
+                    </div>
+
+                </aside>
+
+            </section>
+
+            <section class="panel workforce-shift-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">
+                            OPERATIONAL VISIBILITY
+                        </p>
+
+                        <h3>Dispatch Status</h3>
+                    </div>
+                </div>
+
+                <div
+                    id="assignmentOperations"
+                    class="workforce-shift-detail"
+                >
+                    Live assignment queue connected to IronHook
+                    terminal operations.
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/assignments.js') }}"
+    ></script>
+</body>
+</html>

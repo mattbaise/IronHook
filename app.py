@@ -48,6 +48,10 @@ def create_app():
     def workforce_demo():
         return render_template("demo/workforce.html")
 
+    @app.get("/demo/assignments")
+    def assignments_demo():
+        return render_template("demo/assignments.html")
+
     @app.get("/demo/credential-scan")
     def credential_scan_demo():
         return render_template(
