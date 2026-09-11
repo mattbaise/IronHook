@@ -454,6 +454,304 @@ def dashboard_summary():
     )
 
 
+@api.post("/assignments")
+def create_assignment():
+    body = request.get_json(silent=True) or {}
+
+    try:
+        shift_id = require_positive_integer(
+            body.get("shift_id"),
+            "shift_id",
+        )
+
+        container_id = require_positive_integer(
+            body.get("container_id"),
+            "container_id",
+        )
+
+        worker_id = body.get("worker_id")
+        if worker_id is not None:
+            worker_id = require_positive_integer(
+                worker_id,
+                "worker_id",
+            )
+
+        equipment_id = body.get("equipment_id")
+        if equipment_id is not None:
+            equipment_id = require_positive_integer(
+                equipment_id,
+                "equipment_id",
+            )
+
+        pickup_location_id = body.get("pickup_location_id")
+        if pickup_location_id is not None:
+            pickup_location_id = require_positive_integer(
+                pickup_location_id,
+                "pickup_location_id",
+            )
+
+        delivery_location_id = body.get("delivery_location_id")
+        if delivery_location_id is not None:
+            delivery_location_id = require_positive_integer(
+                delivery_location_id,
+                "delivery_location_id",
+            )
+
+        priority_number = body.get("priority_number", 100)
+        priority_number = require_positive_integer(
+            priority_number,
+            "priority_number",
+        )
+
+    except ValueError as error:
+        return error_response(str(error), 400)
+
+    now = datetime.now(timezone.utc)
+
+    try:
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT shift_id
+                    FROM work_shift
+                    WHERE shift_id = %s
+                    """,
+                    (shift_id,),
+                )
+
+                if cursor.fetchone() is None:
+                    return error_response(
+                        "Shift not found",
+                        404,
+                    )
+
+                cursor.execute(
+                    """
+                    SELECT
+                        container_id,
+                        customs_hold,
+                        security_hold
+                    FROM container
+                    WHERE container_id = %s
+                    """,
+                    (container_id,),
+                )
+
+                container = cursor.fetchone()
+
+                if container is None:
+                    return error_response(
+                        "Container not found",
+                        404,
+                    )
+
+                if (
+                    container["customs_hold"]
+                    or container["security_hold"]
+                ):
+                    return error_response(
+                        "Container is on hold and cannot be assigned",
+                        409,
+                    )
+                cursor.execute(
+                    """
+                    SELECT assignment_id
+                    FROM move_assignment
+                    WHERE container_id = %s
+                      AND assignment_status IN (
+                          'QUEUED',
+                          'ASSIGNED',
+                          'ACCEPTED',
+                          'IN_PROGRESS',
+                          'PAUSED'
+                      )
+                    LIMIT 1
+                    """,
+                    (container_id,),
+                )
+
+                existing_assignment = cursor.fetchone()
+
+                if existing_assignment is not None:
+                    return error_response(
+                        (
+                            "Container already has an active "
+                            "assignment"
+                        ),
+                        409,
+                    )
+                if worker_id is not None:
+                    cursor.execute(
+                        """
+                        SELECT worker_id
+                        FROM worker
+                        WHERE worker_id = %s
+                        """,
+                        (worker_id,),
+                    )
+
+                    if cursor.fetchone() is None:
+                        return error_response(
+                            "Worker not found",
+                            404,
+                        )
+
+                if equipment_id is not None:
+                    cursor.execute(
+                        """
+                        SELECT
+                            equipment_id,
+                            operating_status
+                        FROM equipment
+                        WHERE equipment_id = %s
+                        """,
+                        (equipment_id,),
+                    )
+
+                    equipment = cursor.fetchone()
+
+                    if equipment is None:
+                        return error_response(
+                            "Equipment not found",
+                            404,
+                        )
+
+                    if equipment["operating_status"] in {
+                        "DOWN",
+                        "MAINTENANCE",
+                        "RESTRICTED",
+                    }:
+                        return error_response(
+                            (
+                                "Equipment is not cleared "
+                                "for normal service"
+                            ),
+                            409,
+                        )
+
+                for location_id, field_name in (
+                    (
+                        pickup_location_id,
+                        "pickup_location_id",
+                    ),
+                    (
+                        delivery_location_id,
+                        "delivery_location_id",
+                    ),
+                ):
+                    if location_id is None:
+                        continue
+
+                    cursor.execute(
+                        """
+                        SELECT yard_location_id
+                        FROM yard_location
+                        WHERE yard_location_id = %s
+                        """,
+                        (location_id,),
+                    )
+
+                    if cursor.fetchone() is None:
+                        return error_response(
+                            f"{field_name} not found",
+                            404,
+                        )
+
+                cursor.execute(
+                    """
+                    INSERT INTO move_assignment (
+                        shift_id,
+                        container_id,
+                        worker_id,
+                        equipment_id,
+                        pickup_location_id,
+                        delivery_location_id,
+                        priority_number,
+                        assignment_status,
+                        assigned_at
+                    )
+                    VALUES (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        'QUEUED',
+                        %s
+                    )
+                    RETURNING *
+                    """,
+                    (
+                        shift_id,
+                        container_id,
+                        worker_id,
+                        equipment_id,
+                        pickup_location_id,
+                        delivery_location_id,
+                        priority_number,
+                        now,
+                    ),
+                )
+
+                assignment = cursor.fetchone()
+
+                cursor.execute(
+                    """
+                    INSERT INTO audit_event (
+                        terminal_id,
+                        worker_id,
+                        entity_type,
+                        entity_id,
+                        action_name,
+                        reason,
+                        after_data
+                    )
+                    SELECT
+                        ws.terminal_id,
+                        %s,
+                        'MOVE_ASSIGNMENT',
+                        %s,
+                        'ASSIGNMENT_CREATED',
+                        'Dispatch assignment created',
+                        jsonb_build_object(
+                            'status',
+                            'QUEUED',
+                            'container_id',
+                            %s,
+                            'equipment_id',
+                            %s,
+                            'priority_number',
+                            %s
+                        )
+                    FROM work_shift ws
+                    WHERE ws.shift_id = %s
+                    """,
+                    (
+                        worker_id,
+                        assignment["assignment_id"],
+                        container_id,
+                        equipment_id,
+                        priority_number,
+                        shift_id,
+                    ),
+                )
+
+    except errors.ForeignKeyViolation:
+        return error_response(
+            "Assignment references invalid data",
+            400,
+        )
+
+    return jsonify(
+        {
+            "message": "Assignment created",
+            "assignment": assignment,
+        }
+    ), 201
+
 @api.get("/assignments")
 def list_assignments():
     shift_id = request.args.get("shift_id")
