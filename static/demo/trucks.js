@@ -572,7 +572,7 @@ async function runTruckSimulation() {
     truckSimulationRunning = true;
 
     button.disabled = true;
-    button.textContent = "● Simulation Running";
+    button.textContent = "● Operations Replay Running";
 
     try {
         const resetResponse = await fetch(
@@ -619,7 +619,7 @@ async function runTruckSimulation() {
         console.error(error);
 
         button.textContent =
-            "⚠ Simulation Error";
+            "⚠ Operations Replay Error";
     } finally {
         truckSimulationRunning = false;
         button.disabled = false;

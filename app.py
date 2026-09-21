@@ -69,6 +69,11 @@ def create_app():
     def analytics_portal():
         return render_template("analytics.html", current_user=current_user())
 
+    @app.get("/workday-replay")
+    @login_required
+    def workday_replay():
+        return render_template("workday_replay.html", current_user=current_user())
+
     @app.get("/operator")
     @roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "ADMIN")
     def operator_screen():

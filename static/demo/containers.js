@@ -211,7 +211,7 @@ async function selectContainer(
 
             <div>
                 <span>VESSEL</span>
-                <strong>IRONHOOK HORIZON</strong>
+                <strong>CHIQUITA EXPLORER</strong>
             </div>
 
             <div>
@@ -356,7 +356,7 @@ async function runContainerSimulation() {
 
     containerSimulationRunning = true;
     button.disabled = true;
-    button.textContent = "● Simulation Running";
+    button.textContent = "● Operations Replay Running";
 
     try {
         const resetResponse = await fetch(
@@ -395,7 +395,7 @@ async function runContainerSimulation() {
         console.error(error);
 
         button.textContent =
-            "⚠ Simulation Error";
+            "⚠ Operations Replay Error";
     } finally {
         containerSimulationRunning = false;
         button.disabled = false;

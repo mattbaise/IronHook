@@ -61,7 +61,7 @@
                     </div>
 
                     <button class="start-button" id="startSimulation">
-                        ▶ Start Simulation
+                        ▶ Replay Operations
                     </button>
                 </div>
             </header>
@@ -74,7 +74,7 @@
             <section class="vessel-header">
                 <div>
                     <p class="eyebrow">ACTIVE VESSEL</p>
-                    <h3>IRONHOOK HORIZON</h3>
+                    <h3>CHIQUITA EXPLORER</h3>
 
                     <div class="vessel-meta">
                         <span>Berth 02</span>
@@ -111,7 +111,7 @@
                 <article class="metric-card">
                     <span class="metric-label">Active Cranes</span>
                     <strong>4</strong>
-                    <small>QC-01 through QC-04</small>
+                    <small>CRANE1 through CRANE4</small>
                 </article>
 
                 <article class="metric-card">
@@ -143,15 +143,15 @@
 
                         <div class="vessel">
                             <div class="ship-bow">
-                                <span>IRONHOOK HORIZON</span>
+                                <span>CHIQUITA EXPLORER</span>
                             </div>
 
                             <div class="ship-deck">
                                 {% set crane_map = {
-                                    4: "QC-01",
-                                    8: "QC-02",
-                                    12: "QC-03",
-                                    16: "QC-04"
+                                    4: "CRANE1",
+                                    8: "CRANE2",
+                                    12: "CRANE3",
+                                    16: "CRANE4"
                                 } %}
 
                                 {% for bay in [2,4,6,8,10,12,14,16] %}
@@ -233,23 +233,23 @@
 
                         <div class="crane-list">
                             <div class="crane-row">
-                                <div><strong>QC-01</strong><span>Bay 04</span></div>
-                                <strong id="craneMovesQC01">0 moves</strong>
+                                <div><strong>CRANE1</strong><span>Bay 04</span></div>
+                                <strong id="craneMovesCrane1">0 moves</strong>
                             </div>
 
                             <div class="crane-row">
-                                <div><strong>QC-02</strong><span>Bay 08</span></div>
-                                <strong id="craneMovesQC02">0 moves</strong>
+                                <div><strong>CRANE2</strong><span>Bay 08</span></div>
+                                <strong id="craneMovesCrane2">0 moves</strong>
                             </div>
 
                             <div class="crane-row">
-                                <div><strong>QC-03</strong><span>Bay 12</span></div>
-                                <strong id="craneMovesQC03">0 moves</strong>
+                                <div><strong>CRANE3</strong><span>Bay 12</span></div>
+                                <strong id="craneMovesCrane3">0 moves</strong>
                             </div>
 
                             <div class="crane-row">
-                                <div><strong>QC-04</strong><span>Bay 16</span></div>
-                                <strong id="craneMovesQC04">0 moves</strong>
+                                <div><strong>CRANE4</strong><span>Bay 16</span></div>
+                                <strong id="craneMovesCrane4">0 moves</strong>
                             </div>
                         </div>
                     </article>
@@ -270,7 +270,7 @@
                         </div>
 
                         <div class="alert-item info">
-                            <strong>QC-03 Inspection</strong>
+                            <strong>CRANE3 Inspection</strong>
                             <span>Routine inspection due after current shift.</span>
                         </div>
                     </article>
@@ -422,7 +422,7 @@
                             <span class="event-icon">✓</span>
                             <div>
                                 <strong>Container IH-C-1842 discharged</strong>
-                                <span>QC-02 → TT-17</span>
+                                <span>CRANE2 → TT-17</span>
                             </div>
                         </div>
 
@@ -437,7 +437,7 @@
                         <div class="event-item">
                             <span class="event-icon">▦</span>
                             <div>
-                                <strong>QC-01 completed move 412</strong>
+                                <strong>CRANE1 completed move 412</strong>
                                 <span>Bay 04</span>
                             </div>
                         </div>

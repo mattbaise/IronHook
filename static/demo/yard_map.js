@@ -429,7 +429,7 @@ async function showContainerDetails(containerId, containers) {
 
                 <div class="journey-content">
                     <span>VESSEL</span>
-                    <strong>IRONHOOK HORIZON</strong>
+                    <strong>CHIQUITA EXPLORER</strong>
                     <small>
                         Bay ${container.bay} /
                         Row ${container.row} /
@@ -635,7 +635,7 @@ async function resetYardSimulation() {
     );
 
     if (!response.ok) {
-        throw new Error("Failed to reset simulation");
+        throw new Error("Failed to reset operations replay");
     }
 
     return response.json();
@@ -650,7 +650,7 @@ async function stepYardSimulation() {
     );
 
     if (!response.ok) {
-        throw new Error("Failed to advance simulation");
+        throw new Error("Failed to advance operations replay");
     }
 
     return response.json();
@@ -675,7 +675,7 @@ async function runYardSimulation() {
 
     if (button) {
         button.disabled = true;
-        button.textContent = "● Simulation Running";
+        button.textContent = "● Operations Replay Running";
     }
 
     try {
@@ -703,7 +703,7 @@ async function runYardSimulation() {
         console.error(error);
 
         if (button) {
-            button.textContent = "⚠ Simulation Error";
+            button.textContent = "⚠ Operations Replay Error";
         }
     } finally {
         yardSimulationRunning = false;

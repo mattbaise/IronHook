@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import app as app_module
 import auth
 import pytest
@@ -79,6 +81,31 @@ def test_analytics_rejects_roles_without_operational_access(monkeypatch, role):
         response = client.get("/analytics")
     assert response.status_code == 302
     assert response.headers["Location"].endswith(auth.ROLE_HOME[role])
+
+
+@pytest.mark.parametrize(
+    "role",
+    ["OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN"],
+)
+def test_every_login_can_access_role_based_workday_replay(monkeypatch, role):
+    authenticate(monkeypatch, role)
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/workday-replay")
+    assert response.status_code == 200
+    assert b"Replay Operations" in response.data
+    assert f'data-role="{role}"'.encode() in response.data
+    assert b"CHIQUITA EXPLORER" in response.data
+
+
+def test_vessel_uses_updated_customer_facing_labels():
+    vessel_page = Path(app_module.__file__).parent / "templates/demo/vessel_operations.html"
+    page = vessel_page.read_text(encoding="utf-8")
+    assert "CHIQUITA EXPLORER" in page
+    assert "CRANE1" in page and "CRANE4" in page
+    assert "IRONHOOK HORIZON" not in page
+    assert "Start Simulation" not in page
 
 
 def test_command_center_loads_integrated_navigation(monkeypatch):

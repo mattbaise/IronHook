@@ -10,6 +10,7 @@ const demoDestinations = {
   "gate activity": "/demo/credential-scan",
   "alerts": "/security",
   "analytics": "/analytics",
+  "replay operations": "/workday-replay",
 };
 
 document.querySelectorAll(".sidebar-nav .nav-item").forEach((link) => {
@@ -18,6 +19,15 @@ document.querySelectorAll(".sidebar-nav .nav-item").forEach((link) => {
   if (destination) link.href = destination;
   link.classList.toggle("active", destination === window.location.pathname);
 });
+
+const demoNav = document.querySelector(".sidebar-nav");
+if (demoNav && ![...demoNav.querySelectorAll(".nav-item")].some((link) => link.textContent.includes("Replay Operations"))) {
+  const replay = document.createElement("a");
+  replay.className = "nav-item";
+  replay.href = "/workday-replay";
+  replay.textContent = "▶ Replay Operations";
+  demoNav.appendChild(replay);
+}
 
 const brand = document.querySelector(".sidebar .brand");
 if (brand) {

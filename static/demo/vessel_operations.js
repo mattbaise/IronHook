@@ -24,7 +24,7 @@ async function stepSimulation() {
     );
 
     if (!response.ok) {
-        throw new Error("Unable to advance simulation.");
+        throw new Error("Unable to advance operations replay.");
     }
 
     return response.json();
@@ -40,7 +40,7 @@ async function resetSimulation() {
     );
 
     if (!response.ok) {
-        throw new Error("Unable to reset simulation.");
+        throw new Error("Unable to reset operations replay.");
     }
 
     return response.json();
@@ -174,10 +174,10 @@ function updateContainerTable(containers) {
 
 function updateCranePerformance(cranes) {
     const craneElements = {
-        "QC-01": document.getElementById("craneMovesQC01"),
-        "QC-02": document.getElementById("craneMovesQC02"),
-        "QC-03": document.getElementById("craneMovesQC03"),
-        "QC-04": document.getElementById("craneMovesQC04"),
+        "CRANE1": document.getElementById("craneMovesCrane1"),
+        "CRANE2": document.getElementById("craneMovesCrane2"),
+        "CRANE3": document.getElementById("craneMovesCrane3"),
+        "CRANE4": document.getElementById("craneMovesCrane4"),
     };
 
     Object.entries(cranes).forEach(
@@ -530,7 +530,7 @@ function updateEventFeed(events) {
             <div class="event-item">
                 <span class="event-icon">•</span>
                 <div>
-                    <strong>Simulation ready</strong>
+                    <strong>Operations replay ready</strong>
                     <span>Awaiting terminal activity</span>
                 </div>
             </div>
@@ -610,7 +610,7 @@ async function runSimulation() {
 
     startButton.disabled = true;
     startButton.textContent =
-        "● Simulation Running";
+        "● Operations Replay Running";
 
     try {
         let state =
@@ -632,12 +632,12 @@ async function runSimulation() {
         }
 
         startButton.textContent =
-            "✓ Simulation Complete";
+            "✓ Operations Replay Complete";
 
         await sleep(1000);
 
         startButton.textContent =
-            "Run Simulation Again";
+            "Replay Operations Again";
 
         startButton.disabled = false;
 
@@ -645,7 +645,7 @@ async function runSimulation() {
         console.error(error);
 
         startButton.textContent =
-            "Simulation Error";
+            "Operations Replay Error";
 
         startButton.disabled = false;
     }

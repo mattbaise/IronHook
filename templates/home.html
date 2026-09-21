@@ -15,6 +15,7 @@
         <a href="/" class="nav-item active">◫ Overview</a>
         {% if current_user.role_code != 'HR_PAYROLL' %}<a href="/command-center" class="nav-item">⌁ Command Center</a>{% endif %}
         <a href="/demo" class="nav-item">▦ Vessel Operations</a>
+        <a href="/workday-replay" class="nav-item">▶ Replay Operations</a>
         {% if current_user.role_code != 'HR_PAYROLL' %}
         <a href="/demo/yard" class="nav-item">▤ Yard Map</a>
         <a href="/demo/containers" class="nav-item">□ Containers</a>
@@ -41,6 +42,7 @@
       <section class="module-grid">
         {% if current_user.role_code != 'HR_PAYROLL' %}<a href="/command-center" class="module-card"><span>01</span><strong>Command Center</strong><p>Live KPIs, assignments, capacity and equipment readiness.</p><em>Open dashboard →</em></a>{% endif %}
         <a href="/demo" class="module-card featured"><span>02</span><strong>Vessel Operations</strong><p>Monitor docked vessels and live cargo discharge progress.</p><em>Open vessel view →</em></a>
+        <a href="/workday-replay" class="module-card"><span>R</span><strong>Replay Operations</strong><p>Experience a guided workday replay tailored to your signed-in role.</p><em>Start workday replay →</em></a>
         {% if current_user.role_code != 'HR_PAYROLL' %}
         <a href="/demo/yard" class="module-card"><span>03</span><strong>Yard Operations</strong><p>See live storage and the client-configurable terminal layout.</p><em>Open yard map →</em></a>
         <a href="/demo/assignments" class="module-card"><span>04</span><strong>Dispatch</strong><p>Coordinate active moves, priorities, workers and equipment.</p><em>Open assignments →</em></a>
