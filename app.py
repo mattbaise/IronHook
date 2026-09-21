@@ -9,6 +9,7 @@ from auth import auth
 from routes import api
 from simulation.events import advance_simulation, get_container_history
 from simulation.vessel_state import create_initial_state
+from terminal_admin import terminal_admin
 from worker_portal import worker_portal
 
 
@@ -28,6 +29,7 @@ def create_app():
     app.register_blueprint(api, url_prefix="/api")
     app.register_blueprint(auth, url_prefix="/api/auth")
     app.register_blueprint(worker_portal, url_prefix="/api/worker")
+    app.register_blueprint(terminal_admin, url_prefix="/api/admin")
     demo_state = create_initial_state()
 
     @app.get("/login")
@@ -111,37 +113,24 @@ def create_app():
     @login_required
     def demo_container_history(container_id):
         if container_id not in demo_state["containers"]:
-            return jsonify(
-                {"error": "Container not found", "container_id": container_id}
-            ), 404
-
+            return jsonify({"error": "Container not found", "container_id": container_id}), 404
         history = get_container_history(demo_state, container_id)
-        return jsonify(
-            {
-                "container_id": container_id,
-                "current_status": demo_state["containers"][container_id]["status"],
-                "history": history,
-            }
-        ), 200
+        return jsonify({"container_id": container_id,"current_status": demo_state["containers"][container_id]["status"],"history": history}), 200
 
     @app.post("/api/demo/reset")
     @roles_required("SUPERVISOR", "DISPATCHER", "ADMIN")
     def demo_reset():
-        demo_state.clear()
-        demo_state.update(create_initial_state())
-        return jsonify(demo_state), 200
+        demo_state.clear(); demo_state.update(create_initial_state()); return jsonify(demo_state), 200
 
     @app.post("/api/demo/step")
     @roles_required("SUPERVISOR", "DISPATCHER", "ADMIN")
     def demo_step():
-        result = advance_simulation(demo_state)
-        return jsonify({"result": result, "state": demo_state}), 200
+        result = advance_simulation(demo_state); return jsonify({"result": result, "state": demo_state}), 200
 
     return app
 
 
 app = create_app()
-
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
