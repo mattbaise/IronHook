@@ -14,7 +14,12 @@
       <p class="muted">Live terminal operations</p>
     </div>
     <div class="header-actions">
-      <a class="operator-link" href="/operator">Operator Screen</a>
+      <a class="operator-link" href="/demo">Vessel Operations</a>
+      <a class="operator-link" href="/demo/yard">Yard Map</a>
+      {% if current_user.role_code in ('SECURITY', 'SUPERVISOR', 'ADMIN') %}<a class="operator-link" href="/security">Cargo Security</a>{% endif %}
+      {% if current_user.role_code == 'ADMIN' %}<a class="operator-link" href="/admin">Admin</a>{% endif %}
+      {% if current_user.worker_id %}<a class="operator-link" href="/operator">My IronHook</a>{% endif %}
+      <button class="operator-link" id="logout-button" type="button">Sign out</button>
       <div class="sync-status" id="sync-status"><i></i><span>Connecting…</span></div>
     </div>
   </header>
@@ -29,7 +34,7 @@
     <section class="layout">
       <article class="panel">
         <div class="panel-head">
-          <div><p class="overline">LIVE YARD</p><h2>Capacity by block</h2></div>
+          <div><p class="overline">LIVE YARD</p><h2>Capacity by block</h2><a class="inline-link" href="/demo/yard">Open visual yard map →</a></div>
           <button id="refresh-button" type="button">Refresh</button>
         </div>
         <div id="yard-blocks" class="yard-blocks" aria-live="polite">

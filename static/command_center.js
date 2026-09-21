@@ -106,5 +106,9 @@ byId("container-search").addEventListener("submit", async (event) => {
 });
 
 byId("refresh-button").addEventListener("click", refreshDashboard);
+byId("logout-button").addEventListener("click", async () => {
+  await fetch("/api/auth/logout", { method: "POST" });
+  window.location.href = "/login";
+});
 refreshDashboard();
 setInterval(refreshDashboard, 30000);

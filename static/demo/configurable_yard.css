@@ -1,0 +1,15 @@
+.configurable-yard-panel { margin-top: 22px; }
+.config-yard-copy { max-width: 820px; color: #93a6b2; line-height: 1.6; }
+.config-yard-shell { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 16px; margin-top: 18px; }
+.config-yard-canvas { position: relative; min-height: 520px; overflow: hidden; border: 1px solid #31505e; border-radius: 16px; background: linear-gradient(145deg, #0d1a21, #112832); }
+.config-yard-canvas::before { content: ""; position: absolute; inset: 0; opacity: .18; background-image: linear-gradient(#5a7682 1px, transparent 1px), linear-gradient(90deg, #5a7682 1px, transparent 1px); background-size: 24px 24px; }
+.config-yard-zone { position: absolute; z-index: 1; display: grid; align-content: center; min-width: 80px; min-height: 70px; padding: 10px; overflow: hidden; border: 1px solid #497487; border-radius: 10px; background: #173845; color: #edf7fa; text-align: left; box-shadow: 0 12px 28px rgba(0,0,0,.24); }
+.config-yard-zone:hover,.config-yard-zone.selected { border-color: #f3ad24; box-shadow: 0 0 0 2px rgba(243,173,36,.24); }
+.config-yard-zone span,.config-yard-zone small,.config-yard-zone em { display: block; color: #9fb3bd; font-size: 10px; font-style: normal; }
+.config-yard-zone strong { margin: 4px 0; font-size: 20px; }
+.config-yard-zone.restricted { border-style: dashed; }
+.zone-reefer { background: #164154; }.zone-hazardous,.zone-secure-hold { background: #532b2d; }.zone-inspection { background: #55431d; }.zone-gate,.zone-road { background: #303d44; }.zone-berth { background: #16365f; }.zone-general-cargo,.zone-warehouse { background: #293d2e; }
+.config-yard-detail { display: flex; flex-direction: column; gap: 9px; min-height: 180px; padding: 18px; border: 1px solid #31505e; border-radius: 14px; background: #10212a; }
+.config-yard-detail span { color: #9fb3bd; font-size: 12px; }.config-yard-empty { position: relative; z-index: 1; display: grid; place-content: center; height: 520px; color: #9fb3bd; text-align: center; }
+.config-yard-blocks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }.config-yard-blocks b { padding: 3px 5px; border-radius: 4px; background: rgba(0,0,0,.28); font-size: 9px; }
+@media (max-width: 800px) { .config-yard-shell { grid-template-columns: 1fr; }.config-yard-canvas { min-height: 420px; } }

@@ -9,6 +9,7 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
     >
+    <link rel="stylesheet" href="{{ url_for('static', filename='demo/configurable_yard.css') }}">
 </head>
 
 <body>
@@ -258,11 +259,24 @@
 
             </section>
 
+            <section class="panel configurable-yard-panel">
+                <div class="panel-header">
+                    <div><p class="eyebrow">CLIENT-CONFIGURABLE TERMINAL</p><h3 id="configYardTerminalName">Terminal Layout</h3></div>
+                    <div class="yard-live-status"><span id="configYardVersion">MAP v1</span> · <span id="configYardZoneCount">0</span> zones</div>
+                </div>
+                <p class="config-yard-copy">This live layout is driven by terminal configuration—not hard-coded blocks. Administrators can define terminals, zones, blocks, rows, bays, tiers, capacity and operating rules.</p>
+                <div class="config-yard-shell">
+                    <div id="configYardCanvas" class="config-yard-canvas" aria-label="Configurable terminal yard map"></div>
+                    <aside id="configYardDetail" class="config-yard-detail"><strong>Select a zone</strong><span>View its capacity and access rules.</span></aside>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <script
         src="{{ url_for('static', filename='demo/yard_map.js') }}"
     ></script>
+    <script src="{{ url_for('static', filename='demo/configurable_yard.js') }}"></script>
 </body>
 </html>

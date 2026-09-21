@@ -1,5 +1,6 @@
 import os
 import secrets
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, render_template, request, url_for
@@ -26,6 +27,7 @@ def create_app():
         os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
     )
     app.config["PERMANENT_SESSION_LIFETIME"] = 3600
+    app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 
     app.register_blueprint(api, url_prefix="/api")
     app.register_blueprint(auth, url_prefix="/api/auth")
@@ -33,6 +35,15 @@ def create_app():
     app.register_blueprint(terminal_admin, url_prefix="/api/admin")
     app.register_blueprint(security_operations, url_prefix="/api/security")
     demo_state = create_initial_state()
+
+    @app.before_request
+    def enforce_same_origin_writes():
+        if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+            return None
+        origin = request.headers.get("Origin")
+        if origin and urlsplit(origin).netloc != request.host:
+            return jsonify({"error": "Cross-origin request denied"}), 403
+        return None
 
     @app.get("/login")
     def login_page():
@@ -98,6 +109,16 @@ def create_app():
     def access_history_demo():
         return render_template("demo/access_history.html")
 
+    @app.get("/admin")
+    @roles_required("ADMIN")
+    def admin_portal():
+        return render_template("admin.html", current_user=current_user())
+
+    @app.get("/security")
+    @roles_required("SECURITY", "SUPERVISOR", "ADMIN")
+    def security_portal():
+        return render_template("security.html", current_user=current_user())
+
     @app.errorhandler(404)
     def not_found(_error):
         return jsonify({"error": "Route not found"}), 404
@@ -105,6 +126,21 @@ def create_app():
     @app.errorhandler(405)
     def method_not_allowed(_error):
         return jsonify({"error": "Method not allowed"}), 405
+
+    @app.after_request
+    def secure_response(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        response.headers.setdefault("Permissions-Policy", "camera=(self), geolocation=(self)")
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+            "script-src 'self'; connect-src 'self'; frame-ancestors 'self'",
+        )
+        if request.path.startswith("/api/worker") or request.path.startswith("/api/auth"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.get("/api/demo/state")
     @login_required

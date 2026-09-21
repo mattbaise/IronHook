@@ -1,6 +1,7 @@
 from functools import wraps
 
 from flask import Blueprint, jsonify, redirect, request, session, url_for
+from psycopg.types.json import Jsonb
 from werkzeug.security import check_password_hash
 
 from db import get_connection
@@ -20,6 +21,19 @@ ROLE_HOME = {
 COMMAND_CENTER_ROLES = {
     "SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN"
 }
+
+
+def _record_auth_event(cursor, event_type, outcome, username, user_id=None, details=None):
+    cursor.execute(
+        """INSERT INTO auth_security_event (
+               user_id, username_attempted, event_type, outcome,
+               ip_address, user_agent, details
+           ) VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+        (
+            user_id, username or None, event_type, outcome,
+            request.remote_addr, request.user_agent.string[:500], Jsonb(details or {}),
+        ),
+    )
 
 
 def current_user():
@@ -104,6 +118,10 @@ def login_api():
             user = cursor.fetchone()
 
             if user is None or not user["active"] or user["is_locked"]:
+                _record_auth_event(
+                    cursor, "LOGIN", "BLOCKED" if user and user["is_locked"] else "DENIED",
+                    username, user["user_id"] if user else None,
+                )
                 return jsonify({"error": "Invalid username or password"}), 401
 
             if not check_password_hash(user["password_hash"], password):
@@ -121,6 +139,7 @@ def login_api():
                     """,
                     (user["user_id"],),
                 )
+                _record_auth_event(cursor, "LOGIN", "DENIED", username, user["user_id"])
                 return jsonify({"error": "Invalid username or password"}), 401
 
             cursor.execute(
@@ -133,10 +152,12 @@ def login_api():
                 """,
                 (user["user_id"],),
             )
+            _record_auth_event(cursor, "LOGIN", "SUCCESS", username, user["user_id"])
 
     session.clear()
     session["user_id"] = user["user_id"]
     session["role_code"] = user["role_code"]
+    session.permanent = True
 
     return jsonify({
         "authenticated": True,
@@ -153,6 +174,11 @@ def login_api():
 
 @auth.post("/logout")
 def logout_api():
+    user_id = session.get("user_id")
+    if user_id:
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                _record_auth_event(cursor, "LOGOUT", "SUCCESS", "", user_id)
     session.clear()
     return jsonify({"authenticated": False}), 200
 

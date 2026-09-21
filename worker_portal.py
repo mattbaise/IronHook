@@ -90,7 +90,7 @@ def my_overview():
             cursor.execute(
                 """
                 SELECT certification_code, certification_name, issued_at,
-                       expires_at, status
+                       expires_at, certification_status AS status
                 FROM worker_certification
                 WHERE worker_id = %s
                 ORDER BY expires_at NULLS LAST, certification_name
@@ -152,3 +152,45 @@ def my_pay():
         "pay_periods": [_serialize(row) for row in periods],
         "notice": "Payroll values are informational and must come from the configured authoritative payroll source in production.",
     })
+
+
+@worker_portal.get("/me/schedule")
+@login_required
+def my_schedule():
+    user, error = _require_worker_identity()
+    if error:
+        return error
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT s.worker_schedule_id,s.scheduled_start,s.scheduled_end,
+                          s.reporting_location,s.schedule_status,ws.shift_name,
+                          g.gang_code,g.gang_name
+                   FROM worker_schedule s
+                   LEFT JOIN work_shift ws ON ws.shift_id=s.shift_id
+                   LEFT JOIN gang g ON g.gang_id=s.gang_id
+                   WHERE s.worker_id=%s AND s.scheduled_end >= CURRENT_TIMESTAMP - INTERVAL '1 day'
+                   ORDER BY s.scheduled_start LIMIT 30""",
+                (user["worker_id"],),
+            )
+            schedule = cursor.fetchall()
+    return jsonify({"schedule": [_serialize(row) for row in schedule]})
+
+
+@worker_portal.get("/me/documents")
+@login_required
+def my_documents():
+    user, error = _require_worker_identity()
+    if error:
+        return error
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT worker_document_id,document_type,document_name,issued_at,
+                          expires_at,status,external_reference
+                   FROM worker_document WHERE worker_id=%s
+                   ORDER BY expires_at NULLS LAST,document_name""",
+                (user["worker_id"],),
+            )
+            documents = cursor.fetchall()
+    return jsonify({"documents": [_serialize(row) for row in documents]})

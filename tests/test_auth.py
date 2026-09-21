@@ -1,4 +1,16 @@
+import auth
 from app import create_app
+
+
+class DummyConnection:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def cursor(self):
+        return self
 
 
 def test_current_user_requires_authentication():
@@ -25,7 +37,9 @@ def test_login_requires_username_and_password():
     }
 
 
-def test_logout_clears_session():
+def test_logout_clears_session(monkeypatch):
+    monkeypatch.setattr(auth, "get_connection", lambda: DummyConnection())
+    monkeypatch.setattr(auth, "_record_auth_event", lambda *_args, **_kwargs: None)
     app = create_app()
     app.config["TESTING"] = True
 

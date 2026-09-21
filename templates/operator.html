@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0c141b">
   <title>IronHook Operator</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='operator.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='operator_portal.css') }}">
 </head>
 <body>
   <header class="operator-header">
@@ -17,7 +18,9 @@
     <button class="nav-tab active" data-view="dispatch" type="button">Dispatch</button>
     <button class="nav-tab" data-view="hours" type="button">Hours</button>
     <button class="nav-tab" data-view="pay" type="button">Pay</button>
+    <button class="nav-tab" data-view="schedule" type="button">Schedule</button>
     <button class="nav-tab" data-view="credentials" type="button">Credentials</button>
+    <button class="nav-tab" data-view="documents" type="button">Documents</button>
     <button class="nav-tab" data-view="profile" type="button">Profile</button>
   </nav>
 
@@ -58,6 +61,16 @@
     <section id="view-credentials" class="portal-view">
       <div class="section-head"><p class="overline">WORKER CLEARANCE</p><h2>Credentials & Certifications</h2></div>
       <div id="credential-list" class="credential-grid"></div>
+    </section>
+
+    <section id="view-schedule" class="portal-view">
+      <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Schedule & Gang</h2><p class="helper">Upcoming reporting times, locations and gang assignments.</p></div>
+      <div class="data-card"><div id="schedule-list" class="history-list"><div class="empty-state">Loading schedule…</div></div></div>
+    </section>
+
+    <section id="view-documents" class="portal-view">
+      <div class="section-head"><p class="overline">PRIVATE WORKER INFORMATION</p><h2>My Documents</h2><p class="helper">Status and expiry information for documents linked to your worker record.</p></div>
+      <div id="document-list" class="credential-grid"><div class="empty-state">Loading documents…</div></div>
     </section>
 
     <section id="view-profile" class="portal-view">

@@ -35,7 +35,7 @@ function normalizedGeometry(zone, index) {
     };
 }
 
-function createZone(zone, index) {
+function createZone(zone, index, blocks) {
     const geometry = normalizedGeometry(zone, index);
     const element = document.createElement("button");
     const styleName = YARD_ZONE_STYLES[zone.zone_type] || "other";
@@ -51,11 +51,13 @@ function createZone(zone, index) {
     element.style.height = `${geometry.height}%`;
     element.style.transform = `rotate(${geometry.rotation}deg)`;
     element.dataset.zoneId = zone.terminal_zone_id;
+    const zoneBlocks = blocks.filter((block) => block.terminal_zone_id === zone.terminal_zone_id);
     element.innerHTML = `
         <span>${zone.zone_type.replaceAll("_", " ")}</span>
         <strong>${zone.zone_code}</strong>
         <small>${zone.zone_name}</small>
         ${zone.capacity_units == null ? "" : `<em>${zone.capacity_units} capacity</em>`}
+        <div class="config-yard-blocks">${zoneBlocks.map((block) => `<b>${block.block_code} · ${block.row_count}R/${block.bay_count}B/${block.tier_count}T</b>`).join("")}</div>
     `;
 
     element.addEventListener("click", () => {
@@ -69,6 +71,7 @@ function createZone(zone, index) {
                 <span>${zone.zone_type.replaceAll("_", " ")}</span>
                 <span>${zone.restricted ? "Restricted access" : "Standard access"}</span>
                 <span>${zone.capacity_units == null ? "Capacity not configured" : `${zone.capacity_units} configured units`}</span>
+                <span>${zoneBlocks.length ? `${zoneBlocks.length} blocks · ${zoneBlocks.reduce((total, block) => total + block.row_count * block.bay_count * block.tier_count, 0)} modeled slots` : "No blocks configured"}</span>
             `;
         }
     });
@@ -81,6 +84,7 @@ function renderConfigurableYard(payload) {
     const title = document.getElementById("configYardTerminalName");
     const version = document.getElementById("configYardVersion");
     const zones = payload.zones || [];
+    const blocks = payload.blocks || [];
 
     if (!canvas) {
         return;
@@ -88,7 +92,7 @@ function renderConfigurableYard(payload) {
 
     canvas.replaceChildren();
     zones.filter((zone) => zone.active !== false)
-        .forEach((zone, index) => canvas.appendChild(createZone(zone, index)));
+        .forEach((zone, index) => canvas.appendChild(createZone(zone, index, blocks)));
 
     if (title && payload.terminal) {
         title.textContent = payload.terminal.terminal_name;
@@ -131,6 +135,7 @@ async function loadConfigurableYard() {
             terminal,
             configuration: configData.configuration,
             zones: configData.zones,
+            blocks: configData.blocks,
         });
     } catch (error) {
         console.error(error);

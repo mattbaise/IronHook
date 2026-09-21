@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 
 import qrcode
 from flask import Blueprint, jsonify, request, send_file
+
+from auth import current_user, login_required, roles_required
 from psycopg import errors
 
 from db import get_connection
@@ -19,6 +21,18 @@ from validation import (
 
 
 api = Blueprint("api", __name__)
+
+
+def operator_worker_id(requested_worker_id=None):
+    """Bind operator requests to the worker identity stored in the session."""
+    user = current_user()
+    if user and user["role_code"] == "OPERATOR":
+        if user.get("worker_id") is None:
+            raise PermissionError("Operator account is not linked to a worker")
+        if requested_worker_id is not None and requested_worker_id != user["worker_id"]:
+            raise PermissionError("Operators may only access their own records")
+        return user["worker_id"]
+    return requested_worker_id
 
 
 def error_response(message, status_code):
@@ -45,6 +59,7 @@ def health():
 
 
 @api.get("/containers")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def list_containers():
     search = request.args.get("search", "").strip()
     status = request.args.get("status", "").strip().upper()
@@ -98,6 +113,7 @@ def list_containers():
 
 
 @api.get("/containers/<string:container_number>")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def get_container(container_number):
     normalized_number = container_number.replace("-", "").replace(" ", "").upper()
 
@@ -154,6 +170,7 @@ def get_container(container_number):
 
 
 @api.get("/yard/capacity")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def yard_capacity():
     terminal_id = request.args.get("terminal_id")
 
@@ -180,6 +197,7 @@ def yard_capacity():
 
 
 @api.get("/workers/<int:worker_id>/credential")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
 def worker_credential_detail(worker_id):
     with get_connection() as connection:
         with connection.cursor() as cursor:
@@ -243,6 +261,7 @@ def worker_credential_detail(worker_id):
 
 
 @api.get("/workers")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
 def list_workers():
     active_value = request.args.get("active")
 
@@ -295,6 +314,7 @@ def list_workers():
 
 
 @api.get("/shifts")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "HR_PAYROLL", "ADMIN")
 def list_shifts():
     terminal_id = request.args.get("terminal_id")
 
@@ -345,6 +365,7 @@ def list_shifts():
 
 
 @api.get("/equipment")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def list_equipment():
     terminal_id = request.args.get("terminal_id")
     parameters = []
@@ -382,6 +403,7 @@ def list_equipment():
 
 
 @api.get("/dashboard/summary")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
 def dashboard_summary():
     with get_connection() as connection:
         with connection.cursor() as cursor:
@@ -455,6 +477,7 @@ def dashboard_summary():
 
 
 @api.post("/assignments")
+@roles_required("SUPERVISOR", "DISPATCHER", "ADMIN")
 def create_assignment():
     body = request.get_json(silent=True) or {}
 
@@ -753,12 +776,21 @@ def create_assignment():
     ), 201
 
 @api.get("/assignments")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def list_assignments():
     shift_id = request.args.get("shift_id")
     requested_status = request.args.get("status", "").strip().upper()
 
     conditions = []
     parameters = []
+
+    try:
+        scoped_worker_id = operator_worker_id()
+    except PermissionError as error:
+        return error_response(str(error), 403)
+    if scoped_worker_id is not None:
+        conditions.append("ma.worker_id = %s")
+        parameters.append(scoped_worker_id)
 
     if shift_id:
         try:
@@ -824,6 +856,7 @@ def list_assignments():
 
 
 @api.post("/assignments/<int:assignment_id>/start")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "ADMIN")
 def start_assignment(assignment_id):
     body = request.get_json(silent=True) or {}
 
@@ -832,6 +865,7 @@ def start_assignment(assignment_id):
             body.get("worker_id"),
             "worker_id",
         )
+        worker_id = operator_worker_id(worker_id)
 
         credential_scan_event_id = (
             body.get("credential_scan_event_id")
@@ -845,10 +879,10 @@ def start_assignment(assignment_id):
                 )
             )
 
-    except ValueError as error:
+    except (ValueError, PermissionError) as error:
         return error_response(
             str(error),
-            400,
+            403 if isinstance(error, PermissionError) else 400,
         )
 
     now = datetime.now(timezone.utc)
@@ -1088,17 +1122,19 @@ def start_assignment(assignment_id):
 
 
 @api.post("/assignments/<int:assignment_id>/complete")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "ADMIN")
 def complete_assignment(assignment_id):
     body = request.get_json(silent=True) or {}
 
     try:
         worker_id = require_positive_integer(body.get("worker_id"), "worker_id")
+        worker_id = operator_worker_id(worker_id)
         confirmation_method = validate_confirmation_method(
             body.get("confirmation_method")
         )
         operating_minutes = validate_operating_minutes(body.get("operating_minutes"))
-    except ValueError as error:
-        return error_response(str(error), 400)
+    except (ValueError, PermissionError) as error:
+        return error_response(str(error), 403 if isinstance(error, PermissionError) else 400)
 
     notes = str(body.get("notes", "")).strip() or None
     now = datetime.now(timezone.utc)
@@ -1272,14 +1308,16 @@ def complete_assignment(assignment_id):
 
 
 @api.post("/assignments/<int:assignment_id>/safety-stop")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def safety_stop_assignment(assignment_id):
     body = request.get_json(silent=True) or {}
     reason = str(body.get("reason", "")).strip()
 
     try:
         worker_id = require_positive_integer(body.get("worker_id"), "worker_id")
-    except ValueError as error:
-        return error_response(str(error), 400)
+        worker_id = operator_worker_id(worker_id)
+    except (ValueError, PermissionError) as error:
+        return error_response(str(error), 403 if isinstance(error, PermissionError) else 400)
 
     if len(reason) < 5:
         return error_response("A clear safety-stop reason is required", 400)
@@ -1401,7 +1439,12 @@ def create_qr_response(credential):
 
 
 @api.get("/workers/<int:worker_id>/credential/qr")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
 def get_worker_credential_qr(worker_id):
+    try:
+        operator_worker_id(worker_id)
+    except PermissionError as error:
+        return error_response(str(error), 403)
     if get_credential_secret() is None:
         return error_response(
             "Credential signing is not configured",
@@ -1458,6 +1501,7 @@ def get_worker_credential_qr(worker_id):
 
 
 @api.post("/workers/<int:worker_id>/credential/qr/rotate")
+@roles_required("SECURITY", "ADMIN")
 def rotate_worker_credential_qr(worker_id):
     if get_credential_secret() is None:
         return error_response(
@@ -1500,6 +1544,7 @@ def rotate_worker_credential_qr(worker_id):
 
 
 @api.post("/credentials/scan")
+@login_required
 def scan_worker_credential():
     data = request.get_json(
         silent=True
@@ -1958,6 +2003,7 @@ def scan_worker_credential():
 
 
 @api.get("/credential-scan-events")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def get_credential_scan_events():
     limit_value = request.args.get(
         "limit",
@@ -2050,4 +2096,3 @@ def get_credential_scan_events():
             "events": events,
         }
     ), 200
-
