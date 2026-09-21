@@ -9,6 +9,7 @@ from auth import auth
 from routes import api
 from simulation.events import advance_simulation, get_container_history
 from simulation.vessel_state import create_initial_state
+from worker_portal import worker_portal
 
 
 def create_app():
@@ -26,6 +27,7 @@ def create_app():
 
     app.register_blueprint(api, url_prefix="/api")
     app.register_blueprint(auth, url_prefix="/api/auth")
+    app.register_blueprint(worker_portal, url_prefix="/api/worker")
     demo_state = create_initial_state()
 
     @app.get("/login")
