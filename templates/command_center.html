@@ -14,6 +14,7 @@
       <p class="muted">Live terminal operations</p>
     </div>
     <div class="header-actions">
+      <a class="operator-link" href="/">Operations Home</a>
       <a class="operator-link" href="/demo">Vessel Operations</a>
       <a class="operator-link" href="/demo/yard">Yard Map</a>
       {% if current_user.role_code in ('SECURITY', 'SUPERVISOR', 'ADMIN') %}<a class="operator-link" href="/security">Cargo Security</a>{% endif %}

@@ -51,10 +51,15 @@ def create_app():
         if user is not None:
             if user["role_code"] == "OPERATOR":
                 return redirect(url_for("operator_screen"))
-            return redirect(url_for("command_center"))
+            return redirect(url_for("platform_home"))
         return render_template("login.html")
 
     @app.get("/")
+    @roles_required(*COMMAND_CENTER_ROLES)
+    def platform_home():
+        return render_template("home.html", current_user=current_user())
+
+    @app.get("/command-center")
     @roles_required(*COMMAND_CENTER_ROLES)
     def command_center():
         return render_template("command_center.html", current_user=current_user())
@@ -129,6 +134,18 @@ def create_app():
 
     @app.after_request
     def secure_response(response):
+        if (
+            request.path.startswith("/demo")
+            and response.status_code == 200
+            and response.mimetype == "text/html"
+        ):
+            html = response.get_data(as_text=True)
+            if "demo/navigation.js" not in html:
+                html = html.replace(
+                    "</body>",
+                    '<script src="/static/demo/navigation.js"></script></body>',
+                )
+                response.set_data(html)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         response.headers.setdefault("Referrer-Policy", "same-origin")

@@ -46,6 +46,52 @@ def test_command_center_loads_integrated_navigation(monkeypatch):
     assert b"Admin" in response.data
 
 
+def test_command_center_is_a_separate_module_with_home_link(monkeypatch):
+    authenticate(monkeypatch, "ADMIN")
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/command-center")
+    assert response.status_code == 200
+    assert b"Command Center" in response.data
+    assert b"Operations Home" in response.data
+
+
+def test_demo_pages_receive_completed_navigation(monkeypatch):
+    authenticate(monkeypatch, "ADMIN")
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/demo")
+    assert response.status_code == 200
+    assert b'/static/demo/navigation.js' in response.data
+
+
+def test_admin_uses_guided_yard_builder(monkeypatch):
+    authenticate(monkeypatch, "ADMIN")
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/admin")
+    assert response.status_code == 200
+    assert b"Build the yard in three clear steps" in response.data
+    assert b'admin-yard-preview' in response.data
+    assert b'zone-x' in response.data
+    assert b'block-rules' not in response.data
+
+
+def test_security_uses_integrated_navigation(monkeypatch):
+    authenticate(monkeypatch, "ADMIN")
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/security")
+    assert response.status_code == 200
+    assert b"Cargo Security & Inspection" in response.data
+    assert b'href="/"' in response.data
+    assert b'href="/demo/credential-scan"' in response.data
+
+
 def test_role_bound_pages_reject_wrong_role(monkeypatch):
     authenticate(monkeypatch, "OPERATOR")
     app = create_app()
