@@ -1,8 +1,10 @@
 import os
+import secrets
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
 
+from auth import auth
 from routes import api
 from simulation.events import advance_simulation, get_container_history
 from simulation.vessel_state import create_initial_state
@@ -13,7 +15,16 @@ def create_app():
 
     app = Flask(__name__)
     app.config["JSON_SORT_KEYS"] = False
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Strict"
+    app.config["SESSION_COOKIE_SECURE"] = (
+        os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+    )
+    app.config["PERMANENT_SESSION_LIFETIME"] = 3600
+
     app.register_blueprint(api, url_prefix="/api")
+    app.register_blueprint(auth, url_prefix="/api/auth")
     demo_state = create_initial_state()
 
     @app.get("/")
@@ -54,15 +65,11 @@ def create_app():
 
     @app.get("/demo/credential-scan")
     def credential_scan_demo():
-        return render_template(
-            "demo/credential_scan.html"
-        )
+        return render_template("demo/credential_scan.html")
 
     @app.get("/demo/access-history")
     def access_history_demo():
-        return render_template(
-            "demo/access_history.html"
-        )
+        return render_template("demo/access_history.html")
 
     @app.errorhandler(404)
     def not_found(_error):
@@ -80,23 +87,14 @@ def create_app():
     def demo_container_history(container_id):
         if container_id not in demo_state["containers"]:
             return jsonify(
-                {
-                    "error": "Container not found",
-                    "container_id": container_id,
-                }
+                {"error": "Container not found", "container_id": container_id}
             ), 404
 
-        history = get_container_history(
-            demo_state,
-            container_id,
-        )
-
+        history = get_container_history(demo_state, container_id)
         return jsonify(
             {
                 "container_id": container_id,
-                "current_status": demo_state["containers"][
-                    container_id
-                ]["status"],
+                "current_status": demo_state["containers"][container_id]["status"],
                 "history": history,
             }
         ), 200
@@ -110,13 +108,7 @@ def create_app():
     @app.post("/api/demo/step")
     def demo_step():
         result = advance_simulation(demo_state)
-
-        return jsonify(
-            {
-                "result": result,
-                "state": demo_state,
-            }
-        ), 200
+        return jsonify({"result": result, "state": demo_state}), 200
 
     return app
 
