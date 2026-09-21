@@ -1,5 +1,6 @@
 import app as app_module
 import auth
+import pytest
 from app import create_app
 
 
@@ -27,10 +28,57 @@ def test_operator_screen_loads_for_operator(monkeypatch):
     with app.test_client() as client:
         response = client.get("/operator")
     assert response.status_code == 200
-    assert b"IronHook Operator" in response.data
+    assert b"My IronHook" in response.data
     assert b"Hours & Work History" in response.data
     assert b"My Documents" in response.data
     assert b"Schedule & Gang" in response.data
+    assert b'class="app-shell operator-shell"' in response.data
+    assert b"integrated_shell.css" in response.data
+    assert b'class="sidebar operator-sidebar"' in response.data
+
+
+@pytest.mark.parametrize(
+    ("role", "expected_location"),
+    [
+        ("OPERATOR", "/operator"),
+        ("SUPERVISOR", "/"),
+        ("DISPATCHER", "/"),
+        ("SECURITY", "/"),
+        ("HR_PAYROLL", "/"),
+        ("ADMIN", "/"),
+    ],
+)
+def test_authenticated_roles_redirect_to_valid_home(monkeypatch, role, expected_location):
+    authenticate(monkeypatch, role)
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/login")
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith(expected_location)
+
+
+def test_analytics_has_its_own_page(monkeypatch):
+    authenticate(monkeypatch, "ADMIN")
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/analytics")
+    assert response.status_code == 200
+    assert b"Terminal Analytics" in response.data
+    assert b'href="/analytics" class="nav-item active"' in response.data
+    assert b"analytics.js" in response.data
+
+
+@pytest.mark.parametrize("role", ["OPERATOR", "HR_PAYROLL"])
+def test_analytics_rejects_roles_without_operational_access(monkeypatch, role):
+    authenticate(monkeypatch, role)
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/analytics")
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith(auth.ROLE_HOME[role])
 
 
 def test_command_center_loads_integrated_navigation(monkeypatch):

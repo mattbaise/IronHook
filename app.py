@@ -64,6 +64,11 @@ def create_app():
     def command_center():
         return render_template("command_center.html", current_user=current_user())
 
+    @app.get("/analytics")
+    @roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
+    def analytics_portal():
+        return render_template("analytics.html", current_user=current_user())
+
     @app.get("/operator")
     @roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "ADMIN")
     def operator_screen():

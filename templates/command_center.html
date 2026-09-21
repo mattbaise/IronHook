@@ -23,6 +23,7 @@
         <a href="/demo/workforce" class="nav-item">♙ Workforce</a>
         <a href="/demo/assignments" class="nav-item">✓ Assignments</a>
         <a href="/demo/credential-scan" class="nav-item">⇄ Gate Activity</a>
+        <a href="/analytics" class="nav-item">↗ Analytics</a>
         {% if current_user.role_code in ('SECURITY', 'SUPERVISOR', 'ADMIN') %}<a href="/security" class="nav-item">! Cargo Security</a>{% endif %}
         {% if current_user.role_code == 'ADMIN' %}<a href="/admin" class="nav-item">⚙ Administration</a>{% endif %}
         {% if current_user.worker_id %}<a href="/operator" class="nav-item">♙ My IronHook</a>{% endif %}

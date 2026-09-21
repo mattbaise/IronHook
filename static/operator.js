@@ -8,14 +8,23 @@ function esc(value) {
 }
 
 async function json(url, options = {}) {
-  const response = await fetch(url, options);
-  const body = await response.json().catch(() => ({}));
-  if (response.status === 401) {
-    window.location.href = "/login";
-    throw new Error("Session expired");
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    const body = await response.json().catch(() => ({}));
+    if (response.status === 401) {
+      window.location.href = "/login";
+      throw new Error("Session expired");
+    }
+    if (!response.ok) throw new Error(body.error || "Request failed");
+    return body;
+  } catch (error) {
+    if (error.name === "AbortError") throw new Error("The server took too long to respond. You can still use the other portal tabs.");
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
   }
-  if (!response.ok) throw new Error(body.error || "Request failed");
-  return body;
 }
 
 const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
@@ -117,7 +126,7 @@ function openAction(action, id) {
 }
 
 document.querySelectorAll(".nav-tab").forEach((button) => button.addEventListener("click", () => {
-  document.querySelectorAll(".nav-tab").forEach((item) => item.classList.toggle("active", item === button));
+  document.querySelectorAll(".nav-tab").forEach((item) => item.classList.toggle("active", item.dataset.view === button.dataset.view));
   document.querySelectorAll(".portal-view").forEach((view) => view.classList.toggle("active", view.id === `view-${button.dataset.view}`));
   if (button.dataset.view === "pay") loadPay();
   if (button.dataset.view === "schedule") loadSchedule();
@@ -147,7 +156,7 @@ byId("logout-button").addEventListener("click", async () => { await json("/api/a
 async function boot() {
   try {
     await loadIdentity();
-    await Promise.all([loadAssignments(), loadOverview()]);
+    await Promise.allSettled([loadAssignments(), loadOverview()]);
     setInterval(loadAssignments, 30000);
   } catch (error) {
     byId("worker-name").textContent = "Unable to load worker session";

@@ -9,7 +9,7 @@ const demoDestinations = {
   "assignments": "/demo/assignments",
   "gate activity": "/demo/credential-scan",
   "alerts": "/security",
-  "analytics": "/command-center",
+  "analytics": "/analytics",
 };
 
 document.querySelectorAll(".sidebar-nav .nav-item").forEach((link) => {
