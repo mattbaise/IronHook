@@ -3,89 +3,77 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101820">
+  <meta name="theme-color" content="#0c141b">
   <title>IronHook Operator</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='operator.css') }}">
 </head>
 <body>
   <header class="operator-header">
-    <div>
-      <p class="brand">IRONHOOK <span>BY BAISELINE</span></p>
-      <h1>Operator</h1>
-      <p class="muted">My dispatch assignments</p>
-    </div>
-    <a href="/" class="command-link">Command Center</a>
+    <div><p class="brand">IRONHOOK <span>BY BAISELINE</span></p><h1>Operator</h1><p class="muted" id="identity-line">Secure worker session</p></div>
+    <button id="logout-button" class="secondary compact" type="button">Sign out</button>
   </header>
 
+  <nav class="portal-nav" aria-label="Operator portal">
+    <button class="nav-tab active" data-view="dispatch" type="button">Dispatch</button>
+    <button class="nav-tab" data-view="hours" type="button">Hours</button>
+    <button class="nav-tab" data-view="pay" type="button">Pay</button>
+    <button class="nav-tab" data-view="credentials" type="button">Credentials</button>
+    <button class="nav-tab" data-view="profile" type="button">Profile</button>
+  </nav>
+
   <main>
-    <section class="worker-panel" aria-labelledby="worker-heading">
-      <div>
-        <p class="overline">SHIFT SIGN-IN</p>
-        <h2 id="worker-heading">Operator ID</h2>
-      </div>
-      <form id="worker-form">
-        <label for="worker-id">Worker ID</label>
-        <div class="worker-entry">
-          <input id="worker-id" name="worker_id" type="number" min="1" inputmode="numeric" placeholder="Example: 1" required>
-          <button type="submit">Save</button>
-        </div>
-      </form>
-      <p id="worker-message" class="helper">Enter the worker ID assigned by dispatch.</p>
+    <section id="view-dispatch" class="portal-view active">
+      <section class="identity-card">
+        <div><p class="overline">SIGNED IN OPERATOR</p><h2 id="worker-name">Loading…</h2><p class="helper" id="worker-meta">Verifying secure worker identity…</p></div>
+        <span class="secure-pill">SECURE SESSION</span>
+      </section>
+      <section class="toolbar"><div><p class="overline">LIVE DISPATCH</p><h2>Assignments <span id="assignment-count">—</span></h2></div><button id="refresh-button" class="secondary" type="button">Refresh</button></section>
+      <div id="connection-status" class="connection-status" role="status"><i></i><span>Connecting to dispatch…</span></div>
+      <section id="assignments" class="assignment-list" aria-live="polite"><article class="empty-state">Loading assignments…</article></section>
     </section>
 
-    <section class="toolbar">
-      <div>
-        <p class="overline">LIVE DISPATCH</p>
-        <h2>Assignments <span id="assignment-count">—</span></h2>
+    <section id="view-hours" class="portal-view">
+      <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Hours & Work History</h2><p class="helper">Container, general cargo, overtime and credited hours by shift and gang.</p></div>
+      <div class="metric-grid">
+        <article class="metric"><span>Container Hours</span><strong id="container-hours">0.00</strong></article>
+        <article class="metric"><span>General Cargo</span><strong id="cargo-hours">0.00</strong></article>
+        <article class="metric"><span>Overtime</span><strong id="overtime-hours">0.00</strong></article>
+        <article class="metric"><span>Credited YTD</span><strong id="credited-hours">0.00</strong></article>
       </div>
-      <button id="refresh-button" class="secondary" type="button">Refresh</button>
+      <div class="data-card"><div class="data-card-head"><h3>Recent Shifts</h3><span>Gang + credited time</span></div><div id="shift-history" class="history-list"></div></div>
     </section>
 
-    <div id="connection-status" class="connection-status" role="status">
-      <i></i><span>Connecting to dispatch…</span>
-    </div>
+    <section id="view-pay" class="portal-view">
+      <div class="section-head"><p class="overline">PRIVATE WORKER INFORMATION</p><h2>Pay & Financial Overview</h2><p class="helper">Visible only to this worker and authorized payroll personnel.</p></div>
+      <div class="metric-grid">
+        <article class="metric"><span>Gross YTD</span><strong id="gross-ytd">$0.00</strong></article>
+        <article class="metric"><span>Net YTD</span><strong id="net-ytd">$0.00</strong></article>
+        <article class="metric"><span>Taxes YTD</span><strong id="tax-ytd">$0.00</strong></article>
+        <article class="metric"><span>Retirement YTD</span><strong id="retirement-ytd">$0.00</strong></article>
+      </div>
+      <div class="data-card"><div class="data-card-head"><h3>Pay History</h3><span>Authoritative payroll data</span></div><div id="pay-history" class="history-list"></div></div>
+      <p class="privacy-note">IronHook displays payroll information supplied by the configured payroll system; it does not calculate official payroll.</p>
+    </section>
 
-    <section id="assignments" class="assignment-list" aria-live="polite">
-      <article class="empty-state">Loading assignments…</article>
+    <section id="view-credentials" class="portal-view">
+      <div class="section-head"><p class="overline">WORKER CLEARANCE</p><h2>Credentials & Certifications</h2></div>
+      <div id="credential-list" class="credential-grid"></div>
+    </section>
+
+    <section id="view-profile" class="portal-view">
+      <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Worker Profile</h2></div>
+      <div id="profile-card" class="data-card profile-grid"></div>
     </section>
   </main>
 
   <dialog id="action-dialog">
     <form id="action-form">
-      <div class="dialog-head">
-        <div>
-          <p class="overline" id="dialog-overline">MOVE ACTION</p>
-          <h2 id="dialog-title">Update assignment</h2>
-        </div>
-        <button id="close-dialog" class="icon-button" type="button" aria-label="Close">×</button>
-      </div>
-      <input id="dialog-assignment-id" type="hidden">
-      <input id="dialog-action" type="hidden">
-
-      <div id="complete-fields" hidden>
-        <label for="confirmation-method">Confirmation method</label>
-        <select id="confirmation-method">
-          <option value="SCAN">Scanner</option>
-          <option value="RFID">RFID</option>
-          <option value="GPS">GPS</option>
-          <option value="MANUAL">Manual confirmation</option>
-        </select>
-
-        <label for="operating-minutes">Operating minutes</label>
-        <input id="operating-minutes" type="number" min="1" max="720" inputmode="numeric" value="10">
-
-        <label for="completion-notes">Completion notes</label>
-        <textarea id="completion-notes" rows="3" placeholder="Container and destination confirmed"></textarea>
-      </div>
-
-      <div id="safety-fields" hidden>
-        <label for="safety-reason">Why is work stopping?</label>
-        <textarea id="safety-reason" rows="4" minlength="5" placeholder="Describe the safety concern clearly"></textarea>
-        <p class="safety-note">Safety stops take effect immediately and are recorded.</p>
-      </div>
-
-      <p id="dialog-error" class="error" role="alert"></p>
-      <button id="confirm-action" class="primary wide" type="submit">Confirm</button>
+      <div class="dialog-head"><div><p class="overline" id="dialog-overline">MOVE ACTION</p><h2 id="dialog-title">Update assignment</h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Close">×</button></div>
+      <input id="dialog-assignment-id" type="hidden"><input id="dialog-action" type="hidden">
+      <div id="start-fields" hidden><label for="credential-scan-event-id">Equipment authorization scan event</label><input id="credential-scan-event-id" type="number" min="1" inputmode="numeric" placeholder="Scan credential, then enter event ID"><p class="helper">Equipment moves require a recent, unused IronHook equipment credential scan.</p></div>
+      <div id="complete-fields" hidden><label for="confirmation-method">Confirmation method</label><select id="confirmation-method"><option value="SCAN">Scanner</option><option value="RFID">RFID</option><option value="GPS">GPS</option><option value="MANUAL">Manual confirmation</option></select><label for="operating-minutes">Operating minutes</label><input id="operating-minutes" type="number" min="1" max="720" inputmode="numeric" value="10"><label for="completion-notes">Completion notes</label><textarea id="completion-notes" rows="3" placeholder="Container and destination confirmed"></textarea></div>
+      <div id="safety-fields" hidden><label for="safety-reason">Why is work stopping?</label><textarea id="safety-reason" rows="4" minlength="5" placeholder="Describe the safety concern clearly"></textarea><p class="safety-note">Safety stops take effect immediately and are recorded.</p></div>
+      <p id="dialog-error" class="error" role="alert"></p><button id="confirm-action" class="primary wide" type="submit">Confirm</button>
     </form>
   </dialog>
 
