@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#08131d">
+  <title>IronHook | Secure Sign In</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+</head>
+<body>
+  <main class="login-shell">
+    <section class="brand-panel">
+      <div class="brand-mark">IH</div>
+      <p class="eyebrow">BAISELINE TERMINAL TECHNOLOGY</p>
+      <h1>IRONHOOK</h1>
+      <p class="lede">One secure operating system for terminal operations, workforce, cargo security and worker services.</p>
+      <div class="security-strip"><span></span> Protected terminal access</div>
+    </section>
+    <section class="login-panel">
+      <form id="loginForm" class="login-card">
+        <p class="eyebrow">SECURE ACCESS</p>
+        <h2>Sign in to IronHook</h2>
+        <p class="muted">Your role determines the terminal systems and worker records you can access.</p>
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <p id="loginError" class="error" role="alert"></p>
+        <button id="loginButton" type="submit">Secure Sign In</button>
+        <p class="notice">Authorized users only. Authentication and security events may be audited.</p>
+      </form>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='login.js') }}"></script>
+</body>
+</html>
