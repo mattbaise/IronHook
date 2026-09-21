@@ -1,5 +1,13 @@
 const byId = (id) => document.getElementById(id);
-let sessionUser;
+let sessionUser = {
+  user_id: Number(document.body.dataset.userId),
+  worker_id: Number(document.body.dataset.workerId),
+  display_name: document.body.dataset.displayName,
+  role: document.body.dataset.role,
+  employee_number: document.body.dataset.employeeNumber,
+  job_classification: document.body.dataset.jobClassification,
+  union_local_code: document.body.dataset.unionLocal,
+};
 
 function esc(value) {
   const element = document.createElement("div");
@@ -53,8 +61,6 @@ function assignmentCard(item) {
 }
 
 async function loadIdentity() {
-  const data = await json("/api/auth/me");
-  sessionUser = data.user;
   if (!sessionUser.worker_id) throw new Error("Account is not linked to a worker profile");
   byId("worker-name").textContent = sessionUser.display_name;
   byId("identity-line").textContent = `${sessionUser.display_name} · ${sessionUser.role}`;
@@ -74,7 +80,7 @@ async function loadAssignments() {
   } catch (error) {
     status.className = "connection-status failed";
     status.querySelector("span").textContent = error.message;
-    byId("assignments").innerHTML = '<article class="empty-state">Dispatch is unavailable.</article>';
+    if (!byId("assignments").querySelector(".assignment-card")) byId("assignments").innerHTML = '<article class="empty-state">Dispatch is unavailable. Use Replay Operations for the guided demo.</article>';
   }
 }
 
@@ -125,13 +131,18 @@ function openAction(action, id) {
   byId("action-dialog").showModal();
 }
 
+function activateView(viewName) {
+  document.querySelectorAll(".nav-tab").forEach((item) => item.classList.toggle("active", item.dataset.view === viewName));
+  document.querySelectorAll(".portal-view").forEach((view) => view.classList.toggle("active", view.id === `view-${viewName}`));
+  if (viewName === "pay") loadPay().catch(() => {});
+  if (viewName === "schedule") loadSchedule().catch(() => {});
+  if (viewName === "documents") loadDocuments().catch(() => {});
+}
+
 document.querySelectorAll(".nav-tab").forEach((button) => button.addEventListener("click", () => {
-  document.querySelectorAll(".nav-tab").forEach((item) => item.classList.toggle("active", item.dataset.view === button.dataset.view));
-  document.querySelectorAll(".portal-view").forEach((view) => view.classList.toggle("active", view.id === `view-${button.dataset.view}`));
-  if (button.dataset.view === "pay") loadPay();
-  if (button.dataset.view === "schedule") loadSchedule();
-  if (button.dataset.view === "documents") loadDocuments();
+  activateView(button.dataset.view);
 }));
+window.addEventListener("hashchange", () => activateView(location.hash.replace("#view-", "") || "dispatch"));
 byId("assignments").addEventListener("click", (event) => { const button = event.target.closest("button[data-action]"); if (button) openAction(button.dataset.action, button.dataset.id); });
 byId("action-form").addEventListener("submit", async (event) => {
   event.preventDefault();

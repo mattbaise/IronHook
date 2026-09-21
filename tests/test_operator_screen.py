@@ -37,6 +37,10 @@ def test_operator_screen_loads_for_operator(monkeypatch):
     assert b'class="app-shell operator-shell"' in response.data
     assert b"integrated_shell.css" in response.data
     assert b'class="sidebar operator-sidebar"' in response.data
+    assert b'id="worker-name">Loading' not in response.data
+    assert b'href="#view-hours"' in response.data
+    assert b"DIGITAL CASUAL CARD" in response.data
+    assert b"/api/workers/1/credential/qr" in response.data
 
 
 @pytest.mark.parametrize(
