@@ -54,7 +54,11 @@ def test_command_center_is_a_separate_module_with_home_link(monkeypatch):
         response = client.get("/command-center")
     assert response.status_code == 200
     assert b"Command Center" in response.data
-    assert b"Operations Home" in response.data
+    assert b"Overview" in response.data
+    assert b'class="app-shell"' in response.data
+    assert b'class="sidebar"' in response.data
+    assert b'href="/command-center" class="nav-item active"' in response.data
+    assert b"integrated_shell.css" in response.data
 
 
 def test_demo_pages_receive_completed_navigation(monkeypatch):

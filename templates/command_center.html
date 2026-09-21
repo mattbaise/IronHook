@@ -2,77 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IronHook Command Center</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>IronHook | Command Center</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='demo/vessel_operations.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='integrated_shell.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='command_center.css') }}">
 </head>
 <body>
-  <header class="site-header">
-    <div>
-      <p class="brand">IRONHOOK <span>BY BAISELINE</span></p>
-      <h1>Command Center</h1>
-      <p class="muted">Live terminal operations</p>
-    </div>
-    <div class="header-actions">
-      <a class="operator-link" href="/">Operations Home</a>
-      <a class="operator-link" href="/demo">Vessel Operations</a>
-      <a class="operator-link" href="/demo/yard">Yard Map</a>
-      {% if current_user.role_code in ('SECURITY', 'SUPERVISOR', 'ADMIN') %}<a class="operator-link" href="/security">Cargo Security</a>{% endif %}
-      {% if current_user.role_code == 'ADMIN' %}<a class="operator-link" href="/admin">Admin</a>{% endif %}
-      {% if current_user.worker_id %}<a class="operator-link" href="/operator">My IronHook</a>{% endif %}
-      <button class="operator-link" id="logout-button" type="button">Sign out</button>
-      <div class="sync-status" id="sync-status"><i></i><span>Connecting…</span></div>
-    </div>
-  </header>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand brand-link" href="/"><div class="brand-mark">IH</div><div><h1>IRONHOOK</h1><span>INTEGRATED PLATFORM</span></div></a>
+      <nav class="sidebar-nav" aria-label="Primary navigation">
+        <a href="/" class="nav-item">◫ Overview</a>
+        <a href="/command-center" class="nav-item active">⌁ Command Center</a>
+        <a href="/demo" class="nav-item">▦ Vessel Operations</a>
+        <a href="/demo/yard" class="nav-item">▤ Yard Map</a>
+        <a href="/demo/containers" class="nav-item">□ Containers</a>
+        <a href="/demo/equipment" class="nav-item">⌁ Equipment</a>
+        <a href="/demo/trucks" class="nav-item">▣ Trucks</a>
+        <a href="/demo/workforce" class="nav-item">♙ Workforce</a>
+        <a href="/demo/assignments" class="nav-item">✓ Assignments</a>
+        <a href="/demo/credential-scan" class="nav-item">⇄ Gate Activity</a>
+        {% if current_user.role_code in ('SECURITY', 'SUPERVISOR', 'ADMIN') %}<a href="/security" class="nav-item">! Cargo Security</a>{% endif %}
+        {% if current_user.role_code == 'ADMIN' %}<a href="/admin" class="nav-item">⚙ Administration</a>{% endif %}
+        {% if current_user.worker_id %}<a href="/operator" class="nav-item">♙ My IronHook</a>{% endif %}
+      </nav>
+      <div class="sidebar-footer"><div class="system-status"><span class="status-dot"></span>Terminal Online</div><button id="logout-button" class="shell-logout">Sign out</button></div>
+    </aside>
 
-  <main>
-    <section class="metrics" aria-label="Terminal summary">
-      <article><span>Containers in yard</span><strong id="containers-in-yard">—</strong><small id="container-note">Loading records</small></article>
-      <article><span>Usable yard occupancy</span><strong id="yard-occupancy">—</strong><small id="yard-note">Loading capacity</small></article>
-      <article><span>Equipment ready</span><strong id="equipment-ready">—</strong><small id="equipment-note">Loading fleet</small></article>
-    </section>
+    <main class="main-content">
+      <header class="topbar">
+        <div><p class="eyebrow">LIVE OPERATIONS</p><h2>Command Center</h2></div>
+        <div class="topbar-right"><div class="terminal-status"><span class="status-dot"></span>{{ current_user.display_name }} · {{ current_user.role_code }}</div><div class="sync-status" id="sync-status"><i></i><span>Connecting…</span></div></div>
+      </header>
+      <section class="demo-banner">Terminal Intelligence <span>Live yard, dispatch and equipment status</span></section>
 
-    <section class="layout">
-      <article class="panel">
-        <div class="panel-head">
-          <div><p class="overline">LIVE YARD</p><h2>Capacity by block</h2><a class="inline-link" href="/demo/yard">Open visual yard map →</a></div>
-          <button id="refresh-button" type="button">Refresh</button>
-        </div>
-        <div id="yard-blocks" class="yard-blocks" aria-live="polite">
-          <p class="muted">Loading yard blocks…</p>
-        </div>
-      </article>
+      <section class="command-hero panel">
+        <div><p class="eyebrow">OPERATIONS PULSE</p><h3>Everything moving through the terminal.</h3><p>Monitor yard capacity, active work and equipment readiness from one live view.</p></div>
+        <div class="hero-actions"><button id="refresh-button" type="button">Refresh data</button><a href="/demo">Open Live Terminal →</a></div>
+      </section>
 
-      <article class="panel">
-        <div class="panel-head"><div><p class="overline">DISPATCH</p><h2>Active assignments</h2></div><span id="assignment-count" class="count">—</span></div>
-        <div id="assignments" class="list" aria-live="polite">
-          <p class="muted">Loading assignments…</p>
-        </div>
-      </article>
-    </section>
+      <section class="metrics" aria-label="Terminal summary">
+        <article><div class="metric-icon">□</div><div><span>Containers in yard</span><strong id="containers-in-yard">—</strong><small id="container-note">Loading records</small></div></article>
+        <article><div class="metric-icon">▤</div><div><span>Usable yard occupancy</span><strong id="yard-occupancy">—</strong><small id="yard-note">Loading capacity</small></div></article>
+        <article><div class="metric-icon">⌁</div><div><span>Equipment ready</span><strong id="equipment-ready">—</strong><small id="equipment-note">Loading fleet</small></div></article>
+      </section>
 
-    <section class="layout lower">
-      <article class="panel">
-        <div class="panel-head"><div><p class="overline">CONTAINER FINDER</p><h2>Track a container</h2></div></div>
-        <form id="container-search" class="search">
-          <label for="container-number">Container number</label>
-          <div><input id="container-number" placeholder="Example: MSCU1234567" autocomplete="off"><button type="submit">Find</button></div>
-        </form>
-        <div id="container-result" class="result" aria-live="polite">
-          <p class="muted">Enter a container number to see its location and movement history.</p>
-        </div>
-      </article>
+      <section class="dashboard-grid primary-grid">
+        <article class="dashboard-panel yard-panel">
+          <div class="panel-head"><div><p class="eyebrow">LIVE YARD</p><h3>Capacity by block</h3><a class="inline-link" href="/demo/yard">Open visual yard map →</a></div><span class="panel-mark">▤</span></div>
+          <div id="yard-blocks" class="yard-blocks" aria-live="polite"><p class="muted">Loading yard blocks…</p></div>
+        </article>
+        <article class="dashboard-panel">
+          <div class="panel-head"><div><p class="eyebrow">DISPATCH</p><h3>Active assignments</h3></div><span id="assignment-count" class="count">—</span></div>
+          <div id="assignments" class="list" aria-live="polite"><p class="muted">Loading assignments…</p></div>
+          <a class="panel-footer-link" href="/demo/assignments">Manage assignments →</a>
+        </article>
+      </section>
 
-      <article class="panel">
-        <div class="panel-head"><div><p class="overline">EQUIPMENT</p><h2>Readiness</h2></div><span id="attention-count" class="count">—</span></div>
-        <div id="equipment" class="list" aria-live="polite">
-          <p class="muted">Loading equipment…</p>
-        </div>
-      </article>
-    </section>
-  </main>
-
-  <footer>Demo system · Operational actions are role-based and audited · Safety stops always remain available</footer>
+      <section class="dashboard-grid secondary-grid">
+        <article class="dashboard-panel">
+          <div class="panel-head"><div><p class="eyebrow">CONTAINER FINDER</p><h3>Track a container</h3></div><span class="panel-mark">⌕</span></div>
+          <form id="container-search" class="search"><label for="container-number">Container number</label><div><input id="container-number" placeholder="Example: MSCU1234567" autocomplete="off"><button type="submit">Find container</button></div></form>
+          <div id="container-result" class="result" aria-live="polite"><p class="muted">Enter a container number to see its location and movement history.</p></div>
+        </article>
+        <article class="dashboard-panel">
+          <div class="panel-head"><div><p class="eyebrow">EQUIPMENT</p><h3>Fleet readiness</h3></div><span id="attention-count" class="count">—</span></div>
+          <div id="equipment" class="list" aria-live="polite"><p class="muted">Loading equipment…</p></div>
+          <a class="panel-footer-link" href="/demo/equipment">Open equipment operations →</a>
+        </article>
+      </section>
+      <footer>Operational actions are role-based and audited · Safety stops always remain available</footer>
+    </main>
+  </div>
   <script src="{{ url_for('static', filename='command_center.js') }}"></script>
 </body>
 </html>
