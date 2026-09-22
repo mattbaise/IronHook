@@ -46,7 +46,8 @@ def my_overview():
                 SELECT w.worker_id, w.employee_number, w.first_name, w.last_name,
                        w.job_classification, w.union_local_code, w.active,
                        p.email, p.phone, p.union_status, p.union_join_year,
-                       p.seniority_date, p.direct_deposit_last4
+                       p.seniority_date, p.emergency_contact_name,
+                       p.emergency_contact_phone, p.direct_deposit_last4
                 FROM worker w
                 LEFT JOIN worker_profile_private p ON p.worker_id = w.worker_id
                 WHERE w.worker_id = %s
@@ -90,12 +91,20 @@ def my_overview():
             cursor.execute(
                 """
                 SELECT certification_code, certification_name, issued_at,
-                       expires_at, certification_status AS status
-                FROM worker_certification
-                WHERE worker_id = %s
-                ORDER BY expires_at NULLS LAST, certification_name
+                       expires_at, certification_status AS status,
+                       issuing_authority, signed_off_by, credential_number,
+                       training_hours, notes, TRUE AS is_current
+                FROM worker_certification WHERE worker_id = %s
+                UNION ALL
+                SELECT certification_code, certification_name, issued_at,
+                       expires_at, certification_status AS status,
+                       issuing_authority, signed_off_by, credential_number,
+                       training_hours, notes, FALSE AS is_current
+                FROM worker_certification_history WHERE worker_id = %s
+                ORDER BY is_current DESC, expires_at DESC NULLS LAST,
+                         certification_name
                 """,
-                (worker_id,),
+                (worker_id, worker_id),
             )
             certifications = cursor.fetchall()
 

@@ -64,10 +64,21 @@ def seed():
                             (zone_id,block[0],f"{name} Block {block[0]}",block[1],block[2],block[3],Jsonb({"restricted":restricted,"zone_type":kind})))
             cursor.execute("SELECT worker_id FROM worker WHERE employee_number='MB1001'")
             worker_id = cursor.fetchone()["worker_id"]
+            cursor.execute("""UPDATE worker_certification SET
+                issuing_authority='BaiseLine Terminal Training Center',
+                signed_off_by=CASE certification_code WHEN 'YARD-TRACTOR' THEN 'A. Robinson, Equipment Training Lead' ELSE 'D. Chen, Terminal Safety Manager' END,
+                credential_number=CASE certification_code WHEN 'YARD-TRACTOR' THEN 'YT-MB1001-260110' ELSE 'SAFE-MB1001-260215' END,
+                training_hours=CASE certification_code WHEN 'YARD-TRACTOR' THEN 24 ELSE 8 END,
+                notes='Practical and written evaluation completed'
+                WHERE worker_id=%s""", (worker_id,))
+            cursor.execute("""INSERT INTO worker_certification_history
+                (worker_id,certification_code,certification_name,issued_at,expires_at,certification_status,issuing_authority,signed_off_by,credential_number,training_hours,notes)
+                VALUES (%s,'YARD-TRACTOR-L1','Yard Tractor Operator — Previous Cycle',CURRENT_DATE-1095,CURRENT_DATE-730,'REPLACED','BaiseLine Terminal Training Center','R. Alvarez, Senior Instructor','YT-MB1001-OLD',20,'Renewed after refresher and practical evaluation')
+                ON CONFLICT (worker_id,certification_code,issued_at) DO NOTHING""", (worker_id,))
             cursor.execute("""INSERT INTO worker_profile_private
-                (worker_id,email,phone,union_status,union_join_year,seniority_date,direct_deposit_last4)
-                VALUES (%s,'matthew.baise@example.test','302-555-0101','BASIC',2022,'2022-04-01','1027')
-                ON CONFLICT (worker_id) DO NOTHING""", (worker_id,))
+                (worker_id,email,phone,union_status,union_join_year,seniority_date,emergency_contact_name,emergency_contact_phone,direct_deposit_last4)
+                VALUES (%s,'matthew.baise@example.test','302-555-0101','BASIC',2022,'2022-04-01','Demo Emergency Contact','302-555-0188','1027')
+                ON CONFLICT (worker_id) DO UPDATE SET email=EXCLUDED.email,phone=EXCLUDED.phone,union_status=EXCLUDED.union_status,union_join_year=EXCLUDED.union_join_year,seniority_date=EXCLUDED.seniority_date,emergency_contact_name=EXCLUDED.emergency_contact_name,emergency_contact_phone=EXCLUDED.emergency_contact_phone,direct_deposit_last4=EXCLUDED.direct_deposit_last4""", (worker_id,))
             cursor.execute("SELECT shift_id FROM work_shift ORDER BY shift_id LIMIT 1")
             shift_id = cursor.fetchone()["shift_id"]
             cursor.execute("""INSERT INTO gang (terminal_id,gang_code,gang_name,foreman_worker_id)
@@ -83,6 +94,12 @@ def seed():
             cursor.execute("""INSERT INTO worker_document (worker_id,document_type,document_name,issued_at,expires_at,status,external_reference)
                 SELECT %s,'IDENTITY','TWIC Card',CURRENT_DATE-365,CURRENT_DATE+730,'CURRENT','DEMO-TWIC-MB1001'
                 WHERE NOT EXISTS (SELECT 1 FROM worker_document WHERE worker_id=%s AND document_type='IDENTITY')""", (worker_id,worker_id))
+            cursor.execute("""INSERT INTO worker_document (worker_id,document_type,document_name,issued_at,expires_at,status,external_reference)
+                SELECT %s,'UNION','Union Membership Card',DATE '2022-04-01',NULL,'CURRENT','LOCAL-000-MB1001'
+                WHERE NOT EXISTS (SELECT 1 FROM worker_document WHERE worker_id=%s AND document_type='UNION')""", (worker_id,worker_id))
+            cursor.execute("""INSERT INTO worker_document (worker_id,document_type,document_name,issued_at,expires_at,status,external_reference)
+                SELECT %s,'MEDICAL','Previous Fit-for-Duty Clearance',CURRENT_DATE-1095,CURRENT_DATE-730,'REPLACED','FIT-MB1001-OLD'
+                WHERE NOT EXISTS (SELECT 1 FROM worker_document WHERE worker_id=%s AND external_reference='FIT-MB1001-OLD')""", (worker_id,worker_id))
             cursor.execute("""INSERT INTO worker_schedule (worker_id,shift_id,gang_id,scheduled_start,scheduled_end,reporting_location,schedule_status)
                 SELECT %s,%s,%s,CURRENT_DATE+INTERVAL '1 day 06 hours',CURRENT_DATE+INTERVAL '1 day 14 hours','Dispatch Hall A','CONFIRMED'
                 WHERE NOT EXISTS (SELECT 1 FROM worker_schedule WHERE worker_id=%s AND scheduled_start>CURRENT_TIMESTAMP)""", (worker_id,shift_id,gang_id,worker_id))

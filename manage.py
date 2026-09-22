@@ -14,6 +14,7 @@ MIGRATIONS = (
     (ROOT / "ironhook_worker_portal_v1.sql", "SELECT to_regclass('public.worker_pay_period') IS NOT NULL"),
     (ROOT / "ironhook_terminal_security_v1.sql", "SELECT to_regclass('public.terminal_configuration') IS NOT NULL"),
     (ROOT / "migrations/002_integrated_platform.sql", "SELECT to_regclass('public.terminal_yard_block') IS NOT NULL"),
+    (ROOT / "migrations/003_worker_record_details.sql", "SELECT to_regclass('public.worker_certification_history') IS NOT NULL"),
 )
 
 

@@ -41,6 +41,28 @@ def test_operator_screen_loads_for_operator(monkeypatch):
     assert b'href="#view-hours"' in response.data
     assert b"DIGITAL CASUAL CARD" in response.data
     assert b"/api/workers/1/credential/qr" in response.data
+    assert b"Certification history" in response.data
+    assert b"Signed off by" in response.data
+    assert b"operator_headshot.svg" in response.data
+    assert b"Tomorrow" in response.data
+    assert b"TWIC Card" in response.data
+
+
+def test_operator_replay_keeps_full_shift_workflow_on_one_page(monkeypatch):
+    authenticate(monkeypatch, "OPERATOR")
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        response = client.get("/workday-replay")
+    assert response.status_code == 200
+    assert b'id="replayCamera"' in response.data
+    assert b'id="replayCredentialPayload"' in response.data
+    assert b'id="acceptDispatch"' in response.data
+    assert b'id="authorizeEquipment"' in response.data
+    assert b'id="confirmPickup"' in response.data
+    assert b'id="confirmDelivery"' in response.data
+    assert b'id="finishShift"' in response.data
+    assert b"Open real camera scanner" not in response.data
 
 
 @pytest.mark.parametrize(

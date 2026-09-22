@@ -49,23 +49,25 @@
 
     <section id="view-credentials" class="portal-view">
       <div class="section-head"><p class="overline">WORKER CLEARANCE</p><h2>Credentials & Certifications</h2></div>
-      {% if current_user.worker_id %}<div class="operator-qr-card"><div><p class="overline">DIGITAL CASUAL CARD</p><h3>Scan-ready worker credential</h3><p class="helper">Use this signed QR at badge-in, gate access, hire selection and equipment checkout.</p><a href="/demo/credential-scan">Open live credential scanner →</a></div><img src="/api/workers/{{ current_user.worker_id }}/credential/qr" alt="{{ current_user.display_name }} worker credential QR code"></div>{% endif %}
-      <div id="credential-list" class="credential-grid"></div>
+      {% if current_user.worker_id %}<div class="operator-qr-card"><div><p class="overline">DIGITAL CASUAL CARD</p><h3>Scan-ready worker credential</h3><p class="helper">Use this signed QR at badge-in, gate access, hire selection and equipment checkout.</p><a href="/workday-replay">Use credential in workday replay →</a></div><img src="/api/workers/{{ current_user.worker_id }}/credential/qr" alt="{{ current_user.display_name }} worker credential QR code"></div>{% endif %}
+      <div class="credential-ledger-head"><div><p class="overline">COMPLETE RECORD</p><h3>Certification history</h3></div><span>Current and past qualifications</span></div>
+      <div id="credential-list" class="credential-grid"><article class="credential-card"><p class="overline">YARD-TRACTOR · ACTIVE</p><h3>Yard Tractor Operator</h3><dl><div><dt>Certified</dt><dd>Jan 10, 2026</dd></div><div><dt>Expires</dt><dd>Jan 10, 2027</dd></div><div><dt>Signed off by</dt><dd>A. Robinson, Equipment Training Lead</dd></div><div><dt>Issuer</dt><dd>BaiseLine Terminal Training Center</dd></div></dl></article></div>
     </section>
 
     <section id="view-schedule" class="portal-view">
       <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Schedule & Gang</h2><p class="helper">Upcoming reporting times, locations and gang assignments.</p></div>
-      <div class="data-card"><div id="schedule-list" class="history-list"><div class="empty-state">Loading schedule…</div></div></div>
+      <div class="data-card"><div id="schedule-list" class="history-list"><div class="history-row"><div><span>START</span><strong>Tomorrow · 6:00 AM–2:00 PM</strong></div><div><span>GANG</span><strong>GANG-12 · Yard & Vessel</strong></div><div><span>REPORT TO</span><strong>Dispatch Hall A</strong></div></div></div></div>
     </section>
 
     <section id="view-documents" class="portal-view">
       <div class="section-head"><p class="overline">PRIVATE WORKER INFORMATION</p><h2>My Documents</h2><p class="helper">Status and expiry information for documents linked to your worker record.</p></div>
-      <div id="document-list" class="credential-grid"><div class="empty-state">Loading documents…</div></div>
+      <div id="document-list" class="credential-grid"><article class="credential-card"><p class="overline">IDENTITY · CURRENT</p><h3>TWIC Card</h3><dl><div><dt>Issued</dt><dd>Sep 22, 2025</dd></div><div><dt>Expires</dt><dd>Sep 22, 2028</dd></div><div><dt>Reference</dt><dd>DEMO-TWIC-MB1001</dd></div></dl></article></div>
     </section>
 
     <section id="view-profile" class="portal-view">
       <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Worker Profile</h2></div>
-      <div id="profile-card" class="data-card profile-grid"></div>
+      <div class="profile-overview data-card"><div class="worker-headshot"><img src="{{ url_for('static', filename='demo/operator_headshot.svg') }}" alt="Headshot of {{ current_user.display_name }}"><span class="profile-active">ACTIVE</span></div><div><p class="overline">YARD OPERATIONS</p><h3>{{ current_user.display_name }}</h3><p>{{ current_user.job_classification or 'Operator' }}</p><small>{{ current_user.employee_number or 'Employee number not on file' }} · {{ current_user.union_local_code or 'Union local not on file' }}</small></div></div>
+      <div id="profile-card" class="data-card profile-grid"><div class="profile-item"><span>Employee number</span><strong>{{ current_user.employee_number or 'Not on file' }}</strong></div><div class="profile-item"><span>Classification</span><strong>{{ current_user.job_classification or 'Not on file' }}</strong></div><div class="profile-item"><span>Union local</span><strong>{{ current_user.union_local_code or 'Not on file' }}</strong></div><div class="profile-item"><span>Record status</span><strong>Active worker</strong></div></div>
     </section>
   <footer>Stay alert · Confirm the box and destination · Stop work whenever conditions are unsafe</footer></main></div>
 

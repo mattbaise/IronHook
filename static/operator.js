@@ -36,6 +36,7 @@ async function json(url, options = {}) {
 }
 
 const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
+const dateLabel = (value) => value ? new Date(`${value}T12:00:00`).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" }) : "Not set";
 const location = (item, prefix) => item[`${prefix}_zone`] ? `${item[`${prefix}_zone`]} · ${item[`${prefix}_block`]}-${item[`${prefix}_row`]}-${item[`${prefix}_bay`]}-${item[`${prefix}_tier`]}` : "Not assigned";
 const profileItem = (label, value) => `<div class="profile-item"><span>${esc(label)}</span><strong>${esc(value || "—")}</strong></div>`;
 
@@ -92,9 +93,9 @@ async function loadOverview() {
   byId("overtime-hours").textContent = Number(hours.overtime_hours || 0).toFixed(2);
   byId("credited-hours").textContent = Number(hours.credited_hours || 0).toFixed(2);
   byId("shift-history").innerHTML = data.recent_shifts.map((row) => `<div class="history-row"><div><span>SHIFT</span><strong>${esc(row.starts_at ? new Date(row.starts_at).toLocaleDateString() : "—")} · ${esc(row.shift_name)}</strong></div><div><span>GANG</span><strong>${esc(row.gang_code || row.gang_name || "Not recorded")}</strong></div><div><span>CREDITED</span><strong>${Number(row.credited_hours || 0).toFixed(2)} hrs</strong></div></div>`).join("") || '<div class="empty-state">No credited shifts yet.</div>';
-  byId("credential-list").innerHTML = data.certifications.map((item) => `<article class="credential-card"><p class="overline">${esc(item.certification_code)}</p><h3>${esc(item.certification_name)}</h3><p class="helper ${item.status === "ACTIVE" ? "good" : ""}">${esc(item.status)} · Expires ${esc(item.expires_at || "Not set")}</p></article>`).join("") || '<div class="empty-state">No certifications on file.</div>';
+  byId("credential-list").innerHTML = data.certifications.map((item) => `<article class="credential-card certification-record ${item.is_current ? "current" : "past"}"><div class="cert-title"><p class="overline">${esc(item.certification_code)}</p><span class="cert-status ${item.status === "ACTIVE" ? "active" : ""}">${esc(item.status)}</span></div><h3>${esc(item.certification_name)}</h3><dl><div><dt>Certified</dt><dd>${esc(dateLabel(item.issued_at))}</dd></div><div><dt>Expires</dt><dd>${esc(dateLabel(item.expires_at))}</dd></div><div><dt>Issuing authority</dt><dd>${esc(item.issuing_authority || "Not recorded")}</dd></div><div><dt>Signed off by</dt><dd>${esc(item.signed_off_by || "Not recorded")}</dd></div><div><dt>Credential #</dt><dd>${esc(item.credential_number || "Not recorded")}</dd></div><div><dt>Training</dt><dd>${item.training_hours ? `${Number(item.training_hours).toFixed(1)} hours` : "Not recorded"}</dd></div></dl>${item.notes ? `<p class="cert-notes">${esc(item.notes)}</p>` : ""}<small class="record-type">${item.is_current ? "Current qualification" : "Historical record"}</small></article>`).join("") || '<div class="empty-state">No certification records on file.</div>';
   const p = data.profile || {};
-  byId("profile-card").innerHTML = profileItem("Employee number", p.employee_number) + profileItem("Classification", p.job_classification) + profileItem("Union local", p.union_local_code) + profileItem("Union status", p.union_status) + profileItem("Union join year", p.union_join_year) + profileItem("Seniority date", p.seniority_date) + profileItem("Email", p.email) + profileItem("Phone", p.phone) + profileItem("Direct deposit", p.direct_deposit_last4 ? `•••• ${p.direct_deposit_last4}` : "Not on file");
+  byId("profile-card").innerHTML = profileItem("Full name", `${p.first_name || ""} ${p.last_name || ""}`.trim()) + profileItem("Employee number", p.employee_number) + profileItem("Worker status", p.active ? "Active" : "Inactive") + profileItem("Classification", p.job_classification) + profileItem("Union local", p.union_local_code) + profileItem("Union status", p.union_status) + profileItem("Union join year", p.union_join_year) + profileItem("Seniority date", dateLabel(p.seniority_date)) + profileItem("Email", p.email) + profileItem("Phone", p.phone) + profileItem("Emergency contact", p.emergency_contact_name) + profileItem("Emergency phone", p.emergency_contact_phone) + profileItem("Direct deposit", p.direct_deposit_last4 ? `•••• ${p.direct_deposit_last4}` : "Not on file");
 }
 
 async function loadPay() {
@@ -108,13 +109,17 @@ async function loadPay() {
 }
 
 async function loadSchedule() {
-  const data = await json("/api/worker/me/schedule");
-  byId("schedule-list").innerHTML = data.schedule.map((s) => `<div class="history-row"><div><span>START</span><strong>${esc(new Date(s.scheduled_start).toLocaleString())}</strong></div><div><span>GANG</span><strong>${esc(s.gang_code || "Unassigned")}</strong></div><div><span>REPORT TO</span><strong>${esc(s.reporting_location || "Dispatch")}</strong></div></div>`).join("") || '<div class="empty-state">No upcoming shifts.</div>';
+  try {
+    const data = await json("/api/worker/me/schedule");
+    byId("schedule-list").innerHTML = data.schedule.map((s) => `<div class="history-row"><div><span>${esc(s.schedule_status)}</span><strong>${esc(new Date(s.scheduled_start).toLocaleString())}–${esc(new Date(s.scheduled_end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}</strong></div><div><span>GANG</span><strong>${esc(s.gang_code || "Unassigned")} · ${esc(s.gang_name || s.shift_name || "Shift")}</strong></div><div><span>REPORT TO</span><strong>${esc(s.reporting_location || "Dispatch")}</strong></div></div>`).join("") || '<div class="empty-state">No upcoming shifts are currently posted.</div>';
+  } catch (error) { byId("schedule-list").insertAdjacentHTML("beforeend", `<p class="inline-notice">Live schedule unavailable: ${esc(error.message)}. Showing the demo shift.</p>`); }
 }
 
 async function loadDocuments() {
-  const data = await json("/api/worker/me/documents");
-  byId("document-list").innerHTML = data.documents.map((d) => `<article class="credential-card"><p class="overline">${esc(d.document_type)}</p><h3>${esc(d.document_name)}</h3><p class="helper">${esc(d.status)} · Expires ${esc(d.expires_at || "Not set")}</p></article>`).join("") || '<div class="empty-state">No documents on file.</div>';
+  try {
+    const data = await json("/api/worker/me/documents");
+    byId("document-list").innerHTML = data.documents.map((d) => `<article class="credential-card document-record"><div class="cert-title"><p class="overline">${esc(d.document_type)}</p><span class="cert-status ${d.status === "CURRENT" ? "active" : ""}">${esc(d.status)}</span></div><h3>${esc(d.document_name)}</h3><dl><div><dt>Issued</dt><dd>${esc(dateLabel(d.issued_at))}</dd></div><div><dt>Expires</dt><dd>${esc(dateLabel(d.expires_at))}</dd></div><div><dt>Reference</dt><dd>${esc(d.external_reference || "Not recorded")}</dd></div></dl></article>`).join("") || '<div class="empty-state">No worker documents are currently on file.</div>';
+  } catch (error) { byId("document-list").insertAdjacentHTML("beforeend", `<p class="inline-notice">Live documents unavailable: ${esc(error.message)}. Showing the demo record.</p>`); }
 }
 
 function openAction(action, id) {
@@ -174,4 +179,5 @@ async function boot() {
     byId("worker-meta").textContent = error.message;
   }
 }
+activateView(window.location.hash.replace("#view-", "") || "dispatch");
 boot();
