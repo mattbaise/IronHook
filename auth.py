@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import Blueprint, jsonify, redirect, request, session, url_for
+from flask import Blueprint, current_app, jsonify, redirect, request, session, url_for
 from psycopg.types.json import Jsonb
 from werkzeug.security import check_password_hash
 
@@ -175,11 +175,14 @@ def login_api():
 @auth.post("/logout")
 def logout_api():
     user_id = session.get("user_id")
-    if user_id:
-        with get_connection() as connection:
-            with connection.cursor() as cursor:
-                _record_auth_event(cursor, "LOGOUT", "SUCCESS", "", user_id)
     session.clear()
+    if user_id:
+        try:
+            with get_connection() as connection:
+                with connection.cursor() as cursor:
+                    _record_auth_event(cursor, "LOGOUT", "SUCCESS", "", user_id)
+        except Exception:
+            current_app.logger.exception("Unable to record logout audit event")
     return jsonify({"authenticated": False}), 200
 
 

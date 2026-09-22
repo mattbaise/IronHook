@@ -56,3 +56,23 @@ def test_logout_clears_session(monkeypatch):
         with client.session_transaction() as session:
             assert "user_id" not in session
             assert "role_code" not in session
+
+
+def test_logout_still_clears_session_when_audit_write_fails(monkeypatch):
+    def unavailable_database():
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(auth, "get_connection", unavailable_database)
+    app = create_app()
+    app.config["TESTING"] = True
+
+    with app.test_client() as client:
+        with client.session_transaction() as session:
+            session["user_id"] = 99
+            session["role_code"] = "OPERATOR"
+
+        response = client.post("/api/auth/logout")
+
+        assert response.status_code == 200
+        with client.session_transaction() as session:
+            assert not session

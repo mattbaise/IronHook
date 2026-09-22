@@ -37,7 +37,7 @@ async function json(url, options = {}) {
 
 const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
 const dateLabel = (value) => value ? new Date(`${value}T12:00:00`).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" }) : "Not set";
-const location = (item, prefix) => item[`${prefix}_zone`] ? `${item[`${prefix}_zone`]} · ${item[`${prefix}_block`]}-${item[`${prefix}_row`]}-${item[`${prefix}_bay`]}-${item[`${prefix}_tier`]}` : "Not assigned";
+const formatLocation = (item, prefix) => item[`${prefix}_zone`] ? `${item[`${prefix}_zone`]} · ${item[`${prefix}_block`]}-${item[`${prefix}_row`]}-${item[`${prefix}_bay`]}-${item[`${prefix}_tier`]}` : "Not assigned";
 const profileItem = (label, value) => `<div class="profile-item"><span>${esc(label)}</span><strong>${esc(value || "—")}</strong></div>`;
 
 function actionButtons(item) {
@@ -56,7 +56,7 @@ function assignmentCard(item) {
   const statusClass = item.assignment_status === "IN_PROGRESS" ? "in-progress" : item.assignment_status === "PAUSED" ? "paused" : "";
   return `<article class="assignment-card"><div class="assignment-main">
     <div class="assignment-top"><div><p class="overline">PRIORITY ${esc(item.priority_number)}</p><strong class="container-number">${esc(item.container_number)}</strong></div><span class="status ${statusClass}">${esc(item.assignment_status.replaceAll("_", " "))}</span></div>
-    <div class="route"><div><span>PICK UP</span><strong>${esc(location(item, "pickup"))}</strong></div><b class="route-arrow">→</b><div><span>DELIVER</span><strong>${esc(location(item, "delivery"))}</strong></div></div>
+    <div class="route"><div><span>PICK UP</span><strong>${esc(formatLocation(item, "pickup"))}</strong></div><b class="route-arrow">→</b><div><span>DELIVER</span><strong>${esc(formatLocation(item, "delivery"))}</strong></div></div>
     <div class="detail-grid"><div><span>Operator</span><strong>${esc(item.worker_name)}</strong></div><div><span>Equipment</span><strong>${esc(item.equipment_code)} · ${esc(item.equipment_status)}</strong></div></div>
     ${hold ? '<p class="hold-warning">Hold active — this container cannot be moved.</p>' : ""}</div><div class="card-actions">${actionButtons(item)}</div></article>`;
 }
@@ -147,7 +147,7 @@ function activateView(viewName) {
 document.querySelectorAll(".nav-tab").forEach((button) => button.addEventListener("click", () => {
   activateView(button.dataset.view);
 }));
-window.addEventListener("hashchange", () => activateView(location.hash.replace("#view-", "") || "dispatch"));
+window.addEventListener("hashchange", () => activateView(window.location.hash.replace("#view-", "") || "dispatch"));
 byId("assignments").addEventListener("click", (event) => { const button = event.target.closest("button[data-action]"); if (button) openAction(button.dataset.action, button.dataset.id); });
 byId("action-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -167,7 +167,16 @@ byId("action-form").addEventListener("submit", async (event) => {
 });
 byId("close-dialog").addEventListener("click", () => byId("action-dialog").close());
 byId("refresh-button").addEventListener("click", loadAssignments);
-byId("logout-button").addEventListener("click", async () => { await json("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; });
+byId("logout-button").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  button.textContent = "Signing out…";
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+  } finally {
+    window.location.assign("/login");
+  }
+});
 
 async function boot() {
   try {
