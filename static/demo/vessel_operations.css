@@ -77,6 +77,8 @@ button {
     font-weight: 900;
 }
 
+.brand-mark { border: 0; background: url("../ironhook_mark.svg") center/contain no-repeat; color: transparent; font-size: 0; }
+
 .brand h1 {
     margin: 0;
     font-size: 18px;

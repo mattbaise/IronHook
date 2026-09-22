@@ -134,6 +134,20 @@ def test_vessel_uses_updated_customer_facing_labels():
     assert "Start Simulation" not in page
 
 
+def test_ironhook_brand_assets_are_integrated():
+    root = Path(app_module.__file__).parent
+    mark = (root / "static/ironhook_mark.svg").read_text(encoding="utf-8")
+    wordmark = (root / "static/ironhook_logo.svg").read_text(encoding="utf-8")
+    shell_css = (root / "static/integrated_shell.css").read_text(encoding="utf-8")
+    login = (root / "templates/login.html").read_text(encoding="utf-8")
+    assert "IronHook monogram" in mark
+    assert "IRONHOOK" in wordmark
+    assert "BAISELINE TERMINAL TECHNOLOGY" in wordmark
+    assert 'url("ironhook_mark.svg")' in shell_css
+    assert "ironhook_logo.svg" in login
+    assert "ironhook_mark.svg" in login
+
+
 def test_command_center_loads_integrated_navigation(monkeypatch):
     authenticate(monkeypatch, "ADMIN")
     app = create_app()

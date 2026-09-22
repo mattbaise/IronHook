@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">IronHook by BaiseLine</title><desc id="desc">IronHook terminal technology logo with crane-hook monogram.</desc>
+  <defs><linearGradient id="steel" x1="16" y1="10" x2="154" y2="166" gradientUnits="userSpaceOnUse"><stop stop-color="#173642"/><stop offset="1" stop-color="#091820"/></linearGradient><linearGradient id="teal" x1="39" y1="35" x2="120" y2="137" gradientUnits="userSpaceOnUse"><stop stop-color="#78e2d9"/><stop offset="1" stop-color="#25aaa2"/></linearGradient></defs>
+  <rect x="8" y="8" width="164" height="164" rx="31" fill="url(#steel)" stroke="#3b5d68" stroke-width="7"/>
+  <path d="M48 43h18v93H48zM101 43h18v36h-18zM66 79h35v18H66z" fill="url(#teal)"/>
+  <path d="M110 79v32c0 22 12 34 28 34 13 0 24-8 28-20" fill="none" stroke="#e9a61b" stroke-width="17" stroke-linecap="square"/>
+  <path d="M151 114l15 11-19 7" fill="none" stroke="#e9a61b" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M34 146h83" stroke="#78e2d9" stroke-width="6"/>
+  <text x="205" y="103" fill="#eef5f8" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="800" letter-spacing="4">IRONHOOK</text>
+  <path d="M208 122h472" stroke="#2f4c57" stroke-width="2"/>
+  <text x="208" y="151" fill="#78e2d9" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" letter-spacing="6">BAISELINE TERMINAL TECHNOLOGY</text>
+</svg>

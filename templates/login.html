@@ -5,14 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#08131d">
   <title>IronHook | Secure Sign In</title>
+  <link rel="icon" href="{{ url_for('static', filename='ironhook_mark.svg') }}" type="image/svg+xml">
   <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 </head>
 <body>
   <main class="login-shell">
     <section class="brand-panel">
-      <div class="brand-mark">IH</div>
-      <p class="eyebrow">BAISELINE TERMINAL TECHNOLOGY</p>
-      <h1>IRONHOOK</h1>
+      <img src="{{ url_for('static', filename='ironhook_logo.svg') }}" alt="IronHook by BaiseLine Terminal Technology" style="width:min(560px,100%);height:auto;margin-bottom:18px">
       <p class="lede">One secure operating system for terminal operations, workforce, cargo security and worker services.</p>
       <div class="security-strip"><span></span> Protected terminal access</div>
     </section>
