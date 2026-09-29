@@ -1,35 +1,37 @@
-# IronHook Integrated Platform
+# IronHook v3
 
-IronHook by BaiseLine is a longshoreman-first terminal operations platform built
-with Flask, PostgreSQL, Jinja, HTML, CSS and JavaScript. The integrated feature
-branch connects Command Center operations, the mobile Operator/My IronHook
-portal, configurable multi-terminal yards, cargo security and administration.
+IronHook is a beginner-friendly Flask and PostgreSQL training project for terminal container movements.
+
+It includes two browser screens:
 ![IronHook Command Center showing live terminal operations](ironhook-command-center.png)
 
 *IronHook Command Center connects vessel production, yard capacity, equipment
 readiness and operational events in one live terminal view.*
-## Platform areas
+- **Command Center:** live yard capacity, equipment readiness, active dispatch and container tracking.
+- **Operator:** a mobile-friendly longshoreman screen for starting assignments, completing moves and stopping work for safety.
 
-- `/` — authenticated Command Center with live capacity, dispatch, equipment,
-  container tracking and navigation to all operational views.
-- `/demo` — the original vessel visualization, preserved unchanged.
-- `/demo/yard` — the matching yard visualization plus a database-driven client
-  layout for terminals, zones, blocks, rows, bays, tiers, capacities and rules.
-- `/operator` — Operator dispatch actions and My IronHook profile, hours, pay,
-  credentials, certifications, documents, schedule, gang and shift history.
-- `/security` — risk assessment, random/risk inspection selection, holds,
-  findings, custody transfers, seal/location records, disposition and audit trail.
-- `/admin` — terminal policies, yard configuration, users and role access.
+The existing Command Center remains available at `/`. The operator screen uses the same assignment API and is available at `/operator`.
 
-Roles are `OPERATOR`, `SUPERVISOR`, `DISPATCHER`, `SECURITY`, `HR_PAYROLL` and
-`ADMIN`. Operator actions are bound to the signed-in worker identity; protected
-pages and APIs enforce role checks. Login attempts, lockouts and logouts are
-audited. Secure cookie settings, same-origin write checks, payload limits and
-browser security headers are enabled.
+## Main files
 
-## Local setup
+- `app.py` starts Flask and serves both screens.
+- `routes.py` contains the API routes and movement safety rules.
+- `db.py` opens PostgreSQL connections.
+- `validation.py` validates incoming values.
+- `templates/command_center.html` is the Command Center.
+- `templates/operator.html` is the mobile operator screen.
+- `static/` contains the CSS and JavaScript for both screens.
+- `tests/` contains the automated tests.
 
-Requires Python 3.12+ and PostgreSQL.
+## Install on a Mac
+
+Open Terminal and move into the project folder:
+
+```bash
+cd ~/Projects/IronHook-GitHub/ironhook-api
+```
+
+Create a virtual environment:
 
 ```bash
 python3 -m venv .venv
