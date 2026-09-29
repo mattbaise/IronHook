@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>IronHook | Trucks</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">◫ Overview</a>
+
+                <a href="/demo" class="nav-item">
+                    ▦ Vessel Operations
+                </a>
+
+                <a href="/demo/yard" class="nav-item">
+                    ▤ Yard Map
+                </a>
+
+                <a href="/demo/containers" class="nav-item">
+                    □ Containers
+                </a>
+
+                <a href="/demo/equipment" class="nav-item">
+                    ⌁ Equipment
+                </a>
+
+                <a href="/demo/trucks" class="nav-item active">
+                    ▣ Trucks
+                </a>
+
+                <a href="/demo/workforce" class="nav-item">♙ Workforce</a>
+                <a href="#" class="nav-item">✓ Assignments</a>
+                <a href="#" class="nav-item">⇄ Gate Activity</a>
+                <a href="#" class="nav-item">! Alerts</a>
+                <a href="#" class="nav-item">↗ Analytics</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+
+                <div class="demo-label">
+                    SIMULATED DATA
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">
+                        IRONHOOK LIVE TERMINAL
+                    </p>
+
+                    <h2>Trucks</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Terminal Operational
+                    </div>
+
+                    <button
+                        class="start-button"
+                        id="startTruckSimulation"
+                    >
+                        ▶ Replay Operations
+                    </button>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Ground Transportation Control
+                <span>Live Dispatch + Fleet Data</span>
+            </section>
+
+            <section class="truck-kpi-grid">
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Demo Trucks
+                    </span>
+
+                    <strong id="truckDemoTotal">
+                        0
+                    </strong>
+
+                    <small>
+                        Active dispatch fleet
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Available
+                    </span>
+
+                    <strong id="truckAvailableCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Ready for dispatch
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        In Motion
+                    </span>
+
+                    <strong id="truckActiveCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Assigned or in transit
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Fleet Exceptions
+                    </span>
+
+                    <strong id="truckExceptionCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Database trucks out of service
+                    </small>
+                </article>
+
+            </section>
+
+            <section class="truck-page-layout">
+
+                <article class="panel truck-dispatch-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                LIVE GROUND MOVEMENT
+                            </p>
+
+                            <h3>Terminal Truck Dispatch</h3>
+                        </div>
+
+                        <div class="yard-live-status">
+                            <span class="status-dot"></span>
+                            Live Operations Replay
+                        </div>
+                    </div>
+
+                    <div class="truck-toolbar">
+                        <input
+                            id="truckSearch"
+                            type="text"
+                            placeholder="Search truck, driver or container"
+                            autocomplete="off"
+                        >
+
+                        <select id="truckStatusFilter">
+                            <option value="ALL">
+                                All Statuses
+                            </option>
+
+                            <option value="AVAILABLE">
+                                Available
+                            </option>
+
+                            <option value="ASSIGNED">
+                                Assigned
+                            </option>
+
+                            <option value="IN_TRANSIT">
+                                In Transit
+                            </option>
+                        </select>
+                    </div>
+
+                    <div
+                        id="truckDispatchGrid"
+                        class="truck-dispatch-grid"
+                    ></div>
+
+                </article>
+
+                <aside class="panel truck-detail-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                TRUCK DETAIL
+                            </p>
+
+                            <h3>Active Movement</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        id="truckDetail"
+                        class="truck-detail-empty"
+                    >
+                        Select a truck to view its current assignment.
+                    </div>
+
+                </aside>
+
+            </section>
+
+            <section class="panel truck-fleet-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">
+                            EQUIPMENT DATABASE
+                        </p>
+
+                        <h3>Registered Yard Truck Fleet</h3>
+                    </div>
+                </div>
+
+                <div
+                    id="truckFleetGrid"
+                    class="truck-fleet-grid"
+                ></div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/trucks.js') }}"
+    ></script>
+</body>
+</html>

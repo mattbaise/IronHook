@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IronHook | Operations Home</title>
+  <link rel="icon" href="{{ url_for('static', filename='ironhook_mark.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='demo/vessel_operations.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='integrated_shell.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">IH</div><div><h1>IRONHOOK</h1><span>INTEGRATED PLATFORM</span></div></div>
+      <nav class="sidebar-nav" aria-label="Primary navigation">
+        <a href="/" class="nav-item active">◫ Overview</a>
+        {% if current_user.role_code != 'HR_PAYROLL' %}<a href="/command-center" class="nav-item">⌁ Command Center</a>{% endif %}
+        <a href="/demo" class="nav-item">▦ Vessel Operations</a>
+        <a href="/workday-replay" class="nav-item">▶ Replay Operations</a>
+        {% if current_user.role_code != 'HR_PAYROLL' %}
+        <a href="/demo/yard" class="nav-item">▤ Yard Map</a>
+        <a href="/demo/containers" class="nav-item">□ Containers</a>
+        <a href="/demo/equipment" class="nav-item">⌁ Equipment</a>
+        <a href="/demo/trucks" class="nav-item">▣ Trucks</a>
+        {% endif %}
+        <a href="/demo/workforce" class="nav-item">♙ Workforce</a>
+        {% if current_user.role_code != 'HR_PAYROLL' %}
+        <a href="/demo/assignments" class="nav-item">✓ Assignments</a>
+        <a href="/analytics" class="nav-item">↗ Analytics</a>
+        {% endif %}
+        {% if current_user.role_code in ('SECURITY', 'SUPERVISOR', 'ADMIN') %}<a href="/security" class="nav-item">! Cargo Security</a>{% endif %}
+        {% if current_user.role_code == 'ADMIN' %}<a href="/admin" class="nav-item">⚙ Administration</a>{% endif %}
+      </nav>
+      <div class="sidebar-footer"><div class="system-status"><span class="status-dot"></span>Terminal Online</div><button id="homeLogout" class="shell-logout">Sign out</button></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><div><p class="eyebrow">IRONHOOK BY BAISELINE</p><h2>Operations Home</h2></div><div class="topbar-right"><div class="terminal-status"><span class="status-dot"></span>{{ current_user.display_name }} · {{ current_user.role_code }}</div></div></header>
+      <section class="demo-banner">One Connected Terminal Platform <span>Choose an operating area</span></section>
+      <section class="home-hero panel">
+        <div><p class="eyebrow">TERMINAL COMMAND</p><h3>Everything starts here.</h3><p>Move between vessel, yard, workforce, equipment, security and administration without losing your place.</p></div>
+        <a href="/demo" class="primary-link">Open Live Terminal</a>
+      </section>
+      <section class="module-grid">
+        {% if current_user.role_code != 'HR_PAYROLL' %}<a href="/command-center" class="module-card"><span>01</span><strong>Command Center</strong><p>Live KPIs, assignments, capacity and equipment readiness.</p><em>Open dashboard →</em></a>{% endif %}
+        <a href="/demo" class="module-card featured"><span>02</span><strong>Vessel Operations</strong><p>Monitor docked vessels and live cargo discharge progress.</p><em>Open vessel view →</em></a>
+        <a href="/workday-replay" class="module-card"><span>R</span><strong>Replay Operations</strong><p>Experience a guided workday replay tailored to your signed-in role.</p><em>Start workday replay →</em></a>
+        {% if current_user.role_code != 'HR_PAYROLL' %}
+        <a href="/demo/yard" class="module-card"><span>03</span><strong>Yard Operations</strong><p>See live storage and the client-configurable terminal layout.</p><em>Open yard map →</em></a>
+        <a href="/demo/assignments" class="module-card"><span>04</span><strong>Dispatch</strong><p>Coordinate active moves, priorities, workers and equipment.</p><em>Open assignments →</em></a>
+        {% if current_user.role_code in ('SECURITY', 'SUPERVISOR', 'ADMIN') %}<a href="/security" class="module-card"><span>05</span><strong>Cargo Security</strong><p>Assess risk, inspect cargo and preserve chain of custody.</p><em>Open security →</em></a>{% endif %}
+        <a href="/analytics" class="module-card"><span>06</span><strong>Analytics</strong><p>Compare capacity, throughput, holds and operational readiness.</p><em>Open analytics →</em></a>
+        {% else %}<a href="/demo/workforce" class="module-card"><span>03</span><strong>Workforce Records</strong><p>Review active worker classifications, union status and availability.</p><em>Open workforce →</em></a>{% endif %}
+        {% if current_user.role_code == 'ADMIN' %}<a href="/admin" class="module-card"><span>07</span><strong>Administration</strong><p>Configure terminals, yards, policies and role access.</p><em>Open administration →</em></a>{% endif %}
+      </section>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='home.js') }}"></script>
+</body>
+</html>

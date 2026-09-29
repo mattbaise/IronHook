@@ -1,6 +1,15 @@
+import hashlib
+import hmac
+import io
+import json
+import os
+
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+import qrcode
+from flask import Blueprint, jsonify, request, send_file
+
+from auth import current_user, login_required, roles_required
 from psycopg import errors
 
 from db import get_connection
@@ -12,6 +21,18 @@ from validation import (
 
 
 api = Blueprint("api", __name__)
+
+
+def operator_worker_id(requested_worker_id=None):
+    """Bind operator requests to the worker identity stored in the session."""
+    user = current_user()
+    if user and user["role_code"] == "OPERATOR":
+        if user.get("worker_id") is None:
+            raise PermissionError("Operator account is not linked to a worker")
+        if requested_worker_id is not None and requested_worker_id != user["worker_id"]:
+            raise PermissionError("Operators may only access their own records")
+        return user["worker_id"]
+    return requested_worker_id
 
 
 def error_response(message, status_code):
@@ -38,6 +59,7 @@ def health():
 
 
 @api.get("/containers")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def list_containers():
     search = request.args.get("search", "").strip()
     status = request.args.get("status", "").strip().upper()
@@ -91,6 +113,7 @@ def list_containers():
 
 
 @api.get("/containers/<string:container_number>")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def get_container(container_number):
     normalized_number = container_number.replace("-", "").replace(" ", "").upper()
 
@@ -147,6 +170,7 @@ def get_container(container_number):
 
 
 @api.get("/yard/capacity")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def yard_capacity():
     terminal_id = request.args.get("terminal_id")
 
@@ -172,7 +196,176 @@ def yard_capacity():
     return jsonify({"blocks": rows})
 
 
+@api.get("/workers/<int:worker_id>/credential")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
+def worker_credential_detail(worker_id):
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    w.worker_id,
+                    w.employee_number,
+                    w.first_name,
+                    w.last_name,
+                    w.job_classification,
+                    w.union_local_code,
+                    w.union_status,
+                    w.union_join_year,
+                    w.active,
+                    wc.credential_id,
+                    wc.credential_code,
+                    wc.credential_status,
+                    wc.issued_at,
+                    wc.expires_at
+                FROM worker w
+                LEFT JOIN worker_credential wc
+                    ON wc.worker_id = w.worker_id
+                WHERE w.worker_id = %s
+                """,
+                (worker_id,),
+            )
+
+            worker = cursor.fetchone()
+
+            if worker is None:
+                return error_response(
+                    "Worker not found",
+                    404,
+                )
+
+            cursor.execute(
+                """
+                SELECT
+                    certification_id,
+                    certification_code,
+                    certification_name,
+                    issued_at,
+                    expires_at,
+                    certification_status
+                FROM worker_certification
+                WHERE worker_id = %s
+                ORDER BY certification_name
+                """,
+                (worker_id,),
+            )
+
+            certifications = cursor.fetchall()
+
+    return jsonify(
+        {
+            "worker": worker,
+            "certifications": certifications,
+        }
+    )
+
+
+@api.get("/workers")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
+def list_workers():
+    active_value = request.args.get("active")
+
+    parameters = []
+    where_clause = ""
+
+    if active_value is not None:
+        normalized = active_value.strip().lower()
+
+        if normalized not in {"true", "false"}:
+            return error_response(
+                "active must be true or false",
+                400,
+            )
+
+        where_clause = "WHERE active = %s"
+        parameters.append(
+            normalized == "true"
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT
+                    worker_id,
+                    employee_number,
+                    first_name,
+                    last_name,
+                    job_classification,
+                    union_local_code,
+                    union_status,
+                    union_join_year,
+                    active
+                FROM worker
+                {where_clause}
+                ORDER BY last_name, first_name
+                """,
+                parameters,
+            )
+
+            rows = cursor.fetchall()
+
+    return jsonify(
+        {
+            "count": len(rows),
+            "workers": rows,
+        }
+    )
+
+
+@api.get("/shifts")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "HR_PAYROLL", "ADMIN")
+def list_shifts():
+    terminal_id = request.args.get("terminal_id")
+
+    parameters = []
+    where_clause = ""
+
+    if terminal_id is not None:
+        try:
+            terminal_id = require_positive_integer(
+                terminal_id,
+                "terminal_id",
+            )
+        except ValueError as error:
+            return error_response(
+                str(error),
+                400,
+            )
+
+        where_clause = "WHERE terminal_id = %s"
+        parameters.append(terminal_id)
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT
+                    shift_id,
+                    terminal_id,
+                    shift_name,
+                    starts_at,
+                    ends_at,
+                    shift_status
+                FROM work_shift
+                {where_clause}
+                ORDER BY starts_at DESC
+                """,
+                parameters,
+            )
+
+            rows = cursor.fetchall()
+
+    return jsonify(
+        {
+            "count": len(rows),
+            "shifts": rows,
+        }
+    )
+
+
 @api.get("/equipment")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def list_equipment():
     terminal_id = request.args.get("terminal_id")
     parameters = []
@@ -210,6 +403,7 @@ def list_equipment():
 
 
 @api.get("/dashboard/summary")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
 def dashboard_summary():
     with get_connection() as connection:
         with connection.cursor() as cursor:
@@ -282,13 +476,321 @@ def dashboard_summary():
     )
 
 
+@api.post("/assignments")
+@roles_required("SUPERVISOR", "DISPATCHER", "ADMIN")
+def create_assignment():
+    body = request.get_json(silent=True) or {}
+
+    try:
+        shift_id = require_positive_integer(
+            body.get("shift_id"),
+            "shift_id",
+        )
+
+        container_id = require_positive_integer(
+            body.get("container_id"),
+            "container_id",
+        )
+
+        worker_id = body.get("worker_id")
+        if worker_id is not None:
+            worker_id = require_positive_integer(
+                worker_id,
+                "worker_id",
+            )
+
+        equipment_id = body.get("equipment_id")
+        if equipment_id is not None:
+            equipment_id = require_positive_integer(
+                equipment_id,
+                "equipment_id",
+            )
+
+        pickup_location_id = body.get("pickup_location_id")
+        if pickup_location_id is not None:
+            pickup_location_id = require_positive_integer(
+                pickup_location_id,
+                "pickup_location_id",
+            )
+
+        delivery_location_id = body.get("delivery_location_id")
+        if delivery_location_id is not None:
+            delivery_location_id = require_positive_integer(
+                delivery_location_id,
+                "delivery_location_id",
+            )
+
+        priority_number = body.get("priority_number", 100)
+        priority_number = require_positive_integer(
+            priority_number,
+            "priority_number",
+        )
+
+    except ValueError as error:
+        return error_response(str(error), 400)
+
+    now = datetime.now(timezone.utc)
+
+    try:
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT shift_id
+                    FROM work_shift
+                    WHERE shift_id = %s
+                    """,
+                    (shift_id,),
+                )
+
+                if cursor.fetchone() is None:
+                    return error_response(
+                        "Shift not found",
+                        404,
+                    )
+
+                cursor.execute(
+                    """
+                    SELECT
+                        container_id,
+                        customs_hold,
+                        security_hold
+                    FROM container
+                    WHERE container_id = %s
+                    """,
+                    (container_id,),
+                )
+
+                container = cursor.fetchone()
+
+                if container is None:
+                    return error_response(
+                        "Container not found",
+                        404,
+                    )
+
+                if (
+                    container["customs_hold"]
+                    or container["security_hold"]
+                ):
+                    return error_response(
+                        "Container is on hold and cannot be assigned",
+                        409,
+                    )
+                cursor.execute(
+                    """
+                    SELECT assignment_id
+                    FROM move_assignment
+                    WHERE container_id = %s
+                      AND assignment_status IN (
+                          'QUEUED',
+                          'ASSIGNED',
+                          'ACCEPTED',
+                          'IN_PROGRESS',
+                          'PAUSED'
+                      )
+                    LIMIT 1
+                    """,
+                    (container_id,),
+                )
+
+                existing_assignment = cursor.fetchone()
+
+                if existing_assignment is not None:
+                    return error_response(
+                        (
+                            "Container already has an active "
+                            "assignment"
+                        ),
+                        409,
+                    )
+                if worker_id is not None:
+                    cursor.execute(
+                        """
+                        SELECT worker_id
+                        FROM worker
+                        WHERE worker_id = %s
+                        """,
+                        (worker_id,),
+                    )
+
+                    if cursor.fetchone() is None:
+                        return error_response(
+                            "Worker not found",
+                            404,
+                        )
+
+                if equipment_id is not None:
+                    cursor.execute(
+                        """
+                        SELECT
+                            equipment_id,
+                            operating_status
+                        FROM equipment
+                        WHERE equipment_id = %s
+                        """,
+                        (equipment_id,),
+                    )
+
+                    equipment = cursor.fetchone()
+
+                    if equipment is None:
+                        return error_response(
+                            "Equipment not found",
+                            404,
+                        )
+
+                    if equipment["operating_status"] in {
+                        "DOWN",
+                        "MAINTENANCE",
+                        "RESTRICTED",
+                    }:
+                        return error_response(
+                            (
+                                "Equipment is not cleared "
+                                "for normal service"
+                            ),
+                            409,
+                        )
+
+                for location_id, field_name in (
+                    (
+                        pickup_location_id,
+                        "pickup_location_id",
+                    ),
+                    (
+                        delivery_location_id,
+                        "delivery_location_id",
+                    ),
+                ):
+                    if location_id is None:
+                        continue
+
+                    cursor.execute(
+                        """
+                        SELECT yard_location_id
+                        FROM yard_location
+                        WHERE yard_location_id = %s
+                        """,
+                        (location_id,),
+                    )
+
+                    if cursor.fetchone() is None:
+                        return error_response(
+                            f"{field_name} not found",
+                            404,
+                        )
+
+                cursor.execute(
+                    """
+                    INSERT INTO move_assignment (
+                        shift_id,
+                        container_id,
+                        worker_id,
+                        equipment_id,
+                        pickup_location_id,
+                        delivery_location_id,
+                        priority_number,
+                        assignment_status,
+                        assigned_at
+                    )
+                    VALUES (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        'QUEUED',
+                        %s
+                    )
+                    RETURNING *
+                    """,
+                    (
+                        shift_id,
+                        container_id,
+                        worker_id,
+                        equipment_id,
+                        pickup_location_id,
+                        delivery_location_id,
+                        priority_number,
+                        now,
+                    ),
+                )
+
+                assignment = cursor.fetchone()
+
+                cursor.execute(
+                    """
+                    INSERT INTO audit_event (
+                        terminal_id,
+                        worker_id,
+                        entity_type,
+                        entity_id,
+                        action_name,
+                        reason,
+                        after_data
+                    )
+                    SELECT
+                        ws.terminal_id,
+                        %s,
+                        'MOVE_ASSIGNMENT',
+                        %s,
+                        'ASSIGNMENT_CREATED',
+                        'Dispatch assignment created',
+                        jsonb_build_object(
+                            'status',
+                            'QUEUED',
+                            'container_id',
+                            %s,
+                            'equipment_id',
+                            %s,
+                            'priority_number',
+                            %s
+                        )
+                    FROM work_shift ws
+                    WHERE ws.shift_id = %s
+                    """,
+                    (
+                        worker_id,
+                        assignment["assignment_id"],
+                        container_id,
+                        equipment_id,
+                        priority_number,
+                        shift_id,
+                    ),
+                )
+
+    except errors.ForeignKeyViolation:
+        return error_response(
+            "Assignment references invalid data",
+            400,
+        )
+
+    return jsonify(
+        {
+            "message": "Assignment created",
+            "assignment": assignment,
+        }
+    ), 201
+
 @api.get("/assignments")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def list_assignments():
     shift_id = request.args.get("shift_id")
     requested_status = request.args.get("status", "").strip().upper()
 
     conditions = []
     parameters = []
+
+    try:
+        scoped_worker_id = operator_worker_id()
+    except PermissionError as error:
+        return error_response(str(error), 403)
+    if scoped_worker_id is not None:
+        conditions.append("ma.worker_id = %s")
+        parameters.append(scoped_worker_id)
 
     if shift_id:
         try:
@@ -354,13 +856,34 @@ def list_assignments():
 
 
 @api.post("/assignments/<int:assignment_id>/start")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "ADMIN")
 def start_assignment(assignment_id):
     body = request.get_json(silent=True) or {}
 
     try:
-        worker_id = require_positive_integer(body.get("worker_id"), "worker_id")
-    except ValueError as error:
-        return error_response(str(error), 400)
+        worker_id = require_positive_integer(
+            body.get("worker_id"),
+            "worker_id",
+        )
+        worker_id = operator_worker_id(worker_id)
+
+        credential_scan_event_id = (
+            body.get("credential_scan_event_id")
+        )
+
+        if credential_scan_event_id is not None:
+            credential_scan_event_id = (
+                require_positive_integer(
+                    credential_scan_event_id,
+                    "credential_scan_event_id",
+                )
+            )
+
+    except (ValueError, PermissionError) as error:
+        return error_response(
+            str(error),
+            403 if isinstance(error, PermissionError) else 400,
+        )
 
     now = datetime.now(timezone.utc)
 
@@ -397,7 +920,153 @@ def start_assignment(assignment_id):
                     return error_response("Assigned equipment is not cleared for normal service", 409)
 
                 if assignment["worker_id"] not in {None, worker_id}:
-                    return error_response("Assignment belongs to another worker", 403)
+                    return error_response(
+                        "Assignment belongs to another worker",
+                        403,
+                    )
+
+                if assignment["equipment_id"]:
+                    if credential_scan_event_id is None:
+                        return error_response(
+                            (
+                                "A granted equipment credential scan "
+                                "is required to start this assignment"
+                            ),
+                            403,
+                        )
+
+                    cursor.execute(
+                        """
+                        SELECT
+                            cse.scan_event_id,
+                            cse.scan_type,
+                            cse.scan_result,
+                            cse.scanned_at,
+                            cse.details,
+                            cse.consumed_at,
+                            cse.consumed_by_assignment_id,
+                            wc.worker_id
+                        FROM credential_scan_event cse
+                        JOIN worker_credential wc
+                            ON wc.credential_id =
+                               cse.credential_id
+                        WHERE cse.scan_event_id = %s
+                        FOR UPDATE OF cse
+                        """,
+                        (
+                            credential_scan_event_id,
+                        ),
+                    )
+
+                    scan_event = cursor.fetchone()
+
+                    if not scan_event:
+                        return error_response(
+                            "Credential scan event not found",
+                            403,
+                        )
+
+                    if (
+                        scan_event["scan_type"]
+                        != "EQUIPMENT_ASSIGNMENT"
+                    ):
+                        return error_response(
+                            (
+                                "Credential scan is not an "
+                                "equipment authorization"
+                            ),
+                            403,
+                        )
+
+                    if (
+                        scan_event["scan_result"]
+                        != "GRANTED"
+                    ):
+                        return error_response(
+                            "Credential scan was denied",
+                            403,
+                        )
+
+                    if (
+                        scan_event["worker_id"]
+                        != worker_id
+                    ):
+                        return error_response(
+                            (
+                                "Credential scan belongs "
+                                "to another worker"
+                            ),
+                            403,
+                        )
+
+                    scan_equipment_id = (
+                        scan_event["details"] or {}
+                    ).get("equipment_id")
+
+                    if (
+                        scan_equipment_id
+                        != assignment["equipment_id"]
+                    ):
+                        return error_response(
+                            (
+                                "Credential scan was granted "
+                                "for different equipment"
+                            ),
+                            403,
+                        )
+
+                    scan_age_seconds = (
+                        now
+                        - scan_event["scanned_at"]
+                    ).total_seconds()
+
+                    if (
+                        scan_age_seconds < 0
+                        or scan_age_seconds > 300
+                    ):
+                        return error_response(
+                            (
+                                "Equipment credential scan "
+                                "has expired"
+                            ),
+                            403,
+                        )
+
+                    if scan_event["consumed_at"] is not None:
+                        return error_response(
+                            (
+                                "Equipment credential scan "
+                                "has already been used"
+                            ),
+                            409,
+                        )
+
+                    cursor.execute(
+                        """
+                        UPDATE credential_scan_event
+                        SET consumed_at = %s,
+                            consumed_by_assignment_id = %s
+                        WHERE scan_event_id = %s
+                          AND consumed_at IS NULL
+                        RETURNING scan_event_id
+                        """,
+                        (
+                            now,
+                            assignment_id,
+                            credential_scan_event_id,
+                        ),
+                    )
+
+                    consumed_scan = cursor.fetchone()
+
+                    if consumed_scan is None:
+                        return error_response(
+                            (
+                                "Equipment credential scan "
+                                "has already been used"
+                            ),
+                            409,
+                        )
 
                 cursor.execute(
                     """
@@ -431,11 +1100,19 @@ def start_assignment(assignment_id):
                     SELECT
                         ws.terminal_id, %s, 'MOVE_ASSIGNMENT', %s,
                         'ASSIGNMENT_STARTED', 'Worker accepted and started assignment',
-                        jsonb_build_object('status', 'IN_PROGRESS')
+                        jsonb_build_object(
+                            'status', 'IN_PROGRESS',
+                            'credential_scan_event_id', %s
+                        )
                     FROM work_shift ws
                     WHERE ws.shift_id = %s
                     """,
-                    (worker_id, assignment_id, assignment["shift_id"]),
+                    (
+                        worker_id,
+                        assignment_id,
+                        credential_scan_event_id,
+                        assignment["shift_id"],
+                    ),
                 )
 
     except errors.ForeignKeyViolation:
@@ -445,17 +1122,19 @@ def start_assignment(assignment_id):
 
 
 @api.post("/assignments/<int:assignment_id>/complete")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "ADMIN")
 def complete_assignment(assignment_id):
     body = request.get_json(silent=True) or {}
 
     try:
         worker_id = require_positive_integer(body.get("worker_id"), "worker_id")
+        worker_id = operator_worker_id(worker_id)
         confirmation_method = validate_confirmation_method(
             body.get("confirmation_method")
         )
         operating_minutes = validate_operating_minutes(body.get("operating_minutes"))
-    except ValueError as error:
-        return error_response(str(error), 400)
+    except (ValueError, PermissionError) as error:
+        return error_response(str(error), 403 if isinstance(error, PermissionError) else 400)
 
     notes = str(body.get("notes", "")).strip() or None
     now = datetime.now(timezone.utc)
@@ -629,14 +1308,16 @@ def complete_assignment(assignment_id):
 
 
 @api.post("/assignments/<int:assignment_id>/safety-stop")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
 def safety_stop_assignment(assignment_id):
     body = request.get_json(silent=True) or {}
     reason = str(body.get("reason", "")).strip()
 
     try:
         worker_id = require_positive_integer(body.get("worker_id"), "worker_id")
-    except ValueError as error:
-        return error_response(str(error), 400)
+        worker_id = operator_worker_id(worker_id)
+    except (ValueError, PermissionError) as error:
+        return error_response(str(error), 403 if isinstance(error, PermissionError) else 400)
 
     if len(reason) < 5:
         return error_response("A clear safety-stop reason is required", 400)
@@ -678,3 +1359,740 @@ def safety_stop_assignment(assignment_id):
             )
 
     return jsonify({"message": "Work paused and safety stop recorded"})
+
+
+def get_credential_secret():
+    secret = os.getenv(
+        "IRONHOOK_CREDENTIAL_SECRET",
+        "",
+    )
+
+    if not secret:
+        return None
+
+    return secret.encode("utf-8")
+
+
+def credential_version(credential):
+    version_time = (
+        credential["last_rotated_at"]
+        or credential["issued_at"]
+    )
+
+    return int(version_time.timestamp())
+
+
+def build_credential_payload(credential):
+    secret = get_credential_secret()
+
+    if secret is None:
+        raise RuntimeError(
+            "Credential signing secret is not configured"
+        )
+
+    version = credential_version(
+        credential
+    )
+
+    message = (
+        f"1:"
+        f"{credential['credential_id']}:"
+        f"{version}"
+    )
+
+    signature = hmac.new(
+        secret,
+        message.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return (
+        "IRONHOOK:CREDENTIAL:"
+        f"{message}:"
+        f"{signature}"
+    )
+
+
+def create_qr_response(credential):
+    payload = build_credential_payload(
+        credential
+    )
+
+    qr_image = qrcode.make(payload)
+
+    image_buffer = io.BytesIO()
+
+    qr_image.save(
+        image_buffer,
+        format="PNG",
+    )
+
+    image_buffer.seek(0)
+
+    return send_file(
+        image_buffer,
+        mimetype="image/png",
+        download_name=(
+            f"{credential['credential_code']}.png"
+        ),
+    )
+
+
+@api.get("/workers/<int:worker_id>/credential/qr")
+@roles_required("OPERATOR", "SUPERVISOR", "DISPATCHER", "SECURITY", "HR_PAYROLL", "ADMIN")
+def get_worker_credential_qr(worker_id):
+    try:
+        operator_worker_id(worker_id)
+    except PermissionError as error:
+        return error_response(str(error), 403)
+    if get_credential_secret() is None:
+        return error_response(
+            "Credential signing is not configured",
+            503,
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    credential_id,
+                    credential_code,
+                    credential_status,
+                    issued_at,
+                    expires_at,
+                    last_rotated_at
+                FROM worker_credential
+                WHERE worker_id = %s
+                """,
+                (worker_id,),
+            )
+
+            credential = cursor.fetchone()
+
+    if credential is None:
+        return error_response(
+            "Worker credential not found",
+            404,
+        )
+
+    if (
+        credential["credential_status"]
+        != "ACTIVE"
+    ):
+        return error_response(
+            "Credential is not active",
+            403,
+        )
+
+    if (
+        credential["expires_at"] is not None
+        and credential["expires_at"]
+        <= datetime.now(timezone.utc)
+    ):
+        return error_response(
+            "Credential has expired",
+            403,
+        )
+
+    return create_qr_response(
+        credential
+    )
+
+
+@api.post("/workers/<int:worker_id>/credential/qr/rotate")
+@roles_required("SECURITY", "ADMIN")
+def rotate_worker_credential_qr(worker_id):
+    if get_credential_secret() is None:
+        return error_response(
+            "Credential signing is not configured",
+            503,
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE worker_credential
+                SET
+                    last_rotated_at =
+                        CURRENT_TIMESTAMP
+                WHERE worker_id = %s
+                  AND credential_status = 'ACTIVE'
+                RETURNING
+                    credential_id,
+                    credential_code,
+                    credential_status,
+                    issued_at,
+                    expires_at,
+                    last_rotated_at
+                """,
+                (worker_id,),
+            )
+
+            credential = cursor.fetchone()
+
+    if credential is None:
+        return error_response(
+            "Active worker credential not found",
+            404,
+        )
+
+    return create_qr_response(
+        credential
+    )
+
+
+@api.post("/credentials/scan")
+@login_required
+def scan_worker_credential():
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    payload = str(
+        data.get("payload", "")
+    ).strip()
+
+    scan_type = str(
+        data.get("scan_type", "")
+    ).strip().upper()
+
+    device_code = (
+        str(
+            data.get("device_code")
+        ).strip()
+        if data.get("device_code")
+        else None
+    )
+
+    location_label = (
+        str(
+            data.get("location_label")
+        ).strip()
+        if data.get("location_label")
+        else None
+    )
+
+    terminal_id = data.get(
+        "terminal_id"
+    )
+
+    equipment_id = data.get(
+        "equipment_id"
+    )
+
+    valid_scan_types = {
+        "BADGE_IN",
+        "HIRE_SELECTION",
+        "EQUIPMENT_ASSIGNMENT",
+        "GATE_ACCESS",
+        "BADGE_OUT",
+    }
+
+    if not payload:
+        return error_response(
+            "payload is required",
+            400,
+        )
+
+    if scan_type not in valid_scan_types:
+        return error_response(
+            "Invalid scan_type",
+            400,
+        )
+
+    if get_credential_secret() is None:
+        return error_response(
+            "Credential signing is not configured",
+            503,
+        )
+
+    if scan_type == "EQUIPMENT_ASSIGNMENT":
+        try:
+            equipment_id = require_positive_integer(
+                equipment_id,
+                "equipment_id",
+            )
+        except ValueError as error:
+            return error_response(
+                str(error),
+                400,
+            )
+
+    if terminal_id is not None:
+        try:
+            terminal_id = (
+                require_positive_integer(
+                    terminal_id,
+                    "terminal_id",
+                )
+            )
+        except ValueError as error:
+            return error_response(
+                str(error),
+                400,
+            )
+
+    parts = payload.split(":")
+
+    if (
+        len(parts) != 6
+        or parts[0] != "IRONHOOK"
+        or parts[1] != "CREDENTIAL"
+        or parts[2] != "1"
+    ):
+        return error_response(
+            "Invalid credential payload",
+            401,
+        )
+
+    try:
+        credential_id = int(parts[3])
+        scanned_version = int(parts[4])
+    except ValueError:
+        return error_response(
+            "Invalid credential payload",
+            401,
+        )
+
+    supplied_signature = parts[5]
+
+    message = (
+        f"1:"
+        f"{credential_id}:"
+        f"{scanned_version}"
+    )
+
+    expected_signature = hmac.new(
+        get_credential_secret(),
+        message.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(
+        supplied_signature,
+        expected_signature,
+    ):
+        return error_response(
+            "Invalid credential signature",
+            401,
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    wc.credential_id,
+                    wc.credential_code,
+                    wc.credential_status,
+                    wc.issued_at,
+                    wc.expires_at,
+                    wc.last_rotated_at,
+                    w.worker_id,
+                    w.employee_number,
+                    w.first_name,
+                    w.last_name,
+                    w.job_classification,
+                    w.active
+                FROM worker_credential wc
+                JOIN worker w
+                    ON w.worker_id =
+                       wc.worker_id
+                WHERE wc.credential_id = %s
+                """,
+                (credential_id,),
+            )
+
+            credential = cursor.fetchone()
+
+            if credential is None:
+                return error_response(
+                    "Credential not found",
+                    401,
+                )
+
+            current_version = (
+                credential_version(
+                    credential
+                )
+            )
+
+            version_matches = (
+                scanned_version
+                == current_version
+            )
+
+            not_expired = (
+                credential["expires_at"]
+                is None
+                or credential["expires_at"]
+                > datetime.now(
+                    timezone.utc
+                )
+            )
+
+            credential_allowed = (
+                version_matches
+                and credential[
+                    "credential_status"
+                ] == "ACTIVE"
+                and credential["active"]
+                and not_expired
+            )
+
+            denial_reason = None
+            equipment = None
+            required_certification = None
+
+            if not version_matches:
+                denial_reason = (
+                    "Credential has been rotated"
+                )
+            elif (
+                credential[
+                    "credential_status"
+                ]
+                != "ACTIVE"
+            ):
+                denial_reason = (
+                    "Credential is not active"
+                )
+            elif not credential["active"]:
+                denial_reason = (
+                    "Worker is inactive"
+                )
+            elif not not_expired:
+                denial_reason = (
+                    "Credential has expired"
+                )
+
+            if (
+                credential_allowed
+                and scan_type
+                == "EQUIPMENT_ASSIGNMENT"
+            ):
+                cursor.execute(
+                    """
+                    SELECT
+                        equipment_id,
+                        equipment_code,
+                        equipment_type,
+                        operating_status
+                    FROM equipment
+                    WHERE equipment_id = %s
+                    """,
+                    (equipment_id,),
+                )
+
+                equipment = cursor.fetchone()
+
+                if equipment is None:
+                    credential_allowed = False
+                    denial_reason = (
+                        "Equipment not found"
+                    )
+                elif equipment[
+                    "operating_status"
+                ] in {
+                    "DOWN",
+                    "MAINTENANCE",
+                    "RESTRICTED",
+                }:
+                    credential_allowed = False
+                    denial_reason = (
+                        "Equipment is not cleared "
+                        "for normal service"
+                    )
+                else:
+                    certification_map = {
+                        "STS_CRANE":
+                            "STS-CRANE",
+                        "RTG":
+                            "RTG-OPERATOR",
+                        "TOP_PICK":
+                            "TOP-PICK",
+                        "YARD_TRUCK":
+                            "YARD-TRACTOR",
+                    }
+
+                    required_certification = (
+                        certification_map.get(
+                            equipment[
+                                "equipment_type"
+                            ]
+                        )
+                    )
+
+                    if required_certification:
+                        cursor.execute(
+                            """
+                            SELECT
+                                certification_code,
+                                certification_status,
+                                expires_at
+                            FROM worker_certification
+                            WHERE worker_id = %s
+                              AND certification_code = %s
+                            """,
+                            (
+                                credential[
+                                    "worker_id"
+                                ],
+                                required_certification,
+                            ),
+                        )
+
+                        certification = (
+                            cursor.fetchone()
+                        )
+
+                        certification_valid = (
+                            certification
+                            is not None
+                            and certification[
+                                "certification_status"
+                            ] == "ACTIVE"
+                            and (
+                                certification[
+                                    "expires_at"
+                                ] is None
+                                or certification[
+                                    "expires_at"
+                                ]
+                                >= datetime.now(
+                                    timezone.utc
+                                ).date()
+                            )
+                        )
+
+                        if not certification_valid:
+                            credential_allowed = False
+                            denial_reason = (
+                                "Required certification "
+                                f"{required_certification} "
+                                "is missing, inactive, "
+                                "or expired"
+                            )
+
+            scan_result = (
+                "GRANTED"
+                if credential_allowed
+                else "DENIED"
+            )
+
+            scan_details = {}
+
+            if denial_reason:
+                scan_details[
+                    "denial_reason"
+                ] = denial_reason
+
+            if scan_type == "EQUIPMENT_ASSIGNMENT":
+                scan_details[
+                    "equipment_id"
+                ] = equipment_id
+
+                scan_details[
+                    "required_certification"
+                ] = required_certification
+
+                if equipment:
+                    scan_details.update(
+                        {
+                            "equipment_code":
+                                equipment[
+                                    "equipment_code"
+                                ],
+                            "equipment_type":
+                                equipment[
+                                    "equipment_type"
+                                ],
+                            "operating_status":
+                                equipment[
+                                    "operating_status"
+                                ],
+                        }
+                    )
+
+            cursor.execute(
+                """
+                INSERT INTO
+                    credential_scan_event (
+                        credential_id,
+                        terminal_id,
+                        scan_type,
+                        scan_result,
+                        device_code,
+                        location_label,
+                        details
+                    )
+                VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s::jsonb
+                )
+                RETURNING
+                    scan_event_id,
+                    scanned_at
+                """,
+                (
+                    credential[
+                        "credential_id"
+                    ],
+                    terminal_id,
+                    scan_type,
+                    scan_result,
+                    device_code,
+                    location_label,
+                    json.dumps(
+                        scan_details
+                    ),
+                ),
+            )
+
+            scan_event = (
+                cursor.fetchone()
+            )
+
+    response = {
+        "authorized":
+            credential_allowed,
+        "scan_result":
+            scan_result,
+        "denial_reason":
+            denial_reason,
+        "scan_event_id":
+            scan_event[
+                "scan_event_id"
+            ],
+        "scanned_at":
+            scan_event[
+                "scanned_at"
+            ],
+        "credential": {
+            "credential_code":
+                credential[
+                    "credential_code"
+                ],
+            "employee_number":
+                credential[
+                    "employee_number"
+                ],
+            "worker_name":
+                (
+                    f"{credential['first_name']} "
+                    f"{credential['last_name']}"
+                ),
+            "job_classification":
+                credential[
+                    "job_classification"
+                ],
+        },
+    }
+
+    if not credential_allowed:
+        return jsonify(response), 403
+
+    return jsonify(response), 200
+
+
+@api.get("/credential-scan-events")
+@roles_required("SUPERVISOR", "DISPATCHER", "SECURITY", "ADMIN")
+def get_credential_scan_events():
+    limit_value = request.args.get(
+        "limit",
+        default="50",
+    )
+
+    try:
+        limit = int(limit_value)
+    except ValueError:
+        return error_response(
+            "limit must be an integer",
+            400,
+        )
+
+    if limit < 1 or limit > 200:
+        return error_response(
+            "limit must be between 1 and 200",
+            400,
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    cse.scan_event_id,
+                    cse.scan_type,
+                    cse.scan_result,
+                    cse.device_code,
+                    cse.location_label,
+                    cse.details,
+                    cse.scanned_at,
+                    wc.credential_code,
+                    w.employee_number,
+                    w.first_name,
+                    w.last_name,
+                    w.job_classification
+                FROM credential_scan_event cse
+                JOIN worker_credential wc
+                    ON wc.credential_id =
+                       cse.credential_id
+                JOIN worker w
+                    ON w.worker_id =
+                       wc.worker_id
+                ORDER BY
+                    cse.scanned_at DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+
+            rows = cursor.fetchall()
+
+    events = []
+
+    for row in rows:
+        events.append(
+            {
+                "scan_event_id":
+                    row["scan_event_id"],
+                "scan_type":
+                    row["scan_type"],
+                "scan_result":
+                    row["scan_result"],
+                "device_code":
+                    row["device_code"],
+                "location_label":
+                    row["location_label"],
+                "details":
+                    row["details"] or {},
+                "scanned_at":
+                    row["scanned_at"],
+                "credential_code":
+                    row["credential_code"],
+                "employee_number":
+                    row["employee_number"],
+                "worker_name":
+                    (
+                        f"{row['first_name']} "
+                        f"{row['last_name']}"
+                    ),
+                "job_classification":
+                    row["job_classification"],
+            }
+        )
+
+    return jsonify(
+        {
+            "count": len(events),
+            "events": events,
+        }
+    ), 200

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>IronHook | Workforce</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">◫ Overview</a>
+                <a href="/demo" class="nav-item">▦ Vessel Operations</a>
+                <a href="/demo/yard" class="nav-item">▤ Yard Map</a>
+                <a href="/demo/containers" class="nav-item">□ Containers</a>
+                <a href="/demo/equipment" class="nav-item">⌁ Equipment</a>
+                <a href="/demo/trucks" class="nav-item">▣ Trucks</a>
+
+                <a href="/demo/workforce" class="nav-item active">
+                    ♙ Workforce
+                </a>
+
+                <a href="#" class="nav-item">✓ Assignments</a>
+                <a href="#" class="nav-item">⇄ Gate Activity</a>
+                <a href="#" class="nav-item">! Alerts</a>
+                <a href="#" class="nav-item">↗ Analytics</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+
+                <div class="demo-label">
+                    SIMULATED DATA
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">
+                        IRONHOOK LIVE TERMINAL
+                    </p>
+
+                    <h2>Workforce</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Workforce Systems Online
+                    </div>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Workforce Operations Control
+                <span>Live Worker + Shift Data</span>
+            </section>
+
+            <section class="workforce-kpi-grid">
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Total Workers
+                    </span>
+
+                    <strong id="workforceTotalCount">0</strong>
+
+                    <small>
+                        Registered workforce
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Active Workers
+                    </span>
+
+                    <strong id="workforceActiveCount">0</strong>
+
+                    <small>
+                        Cleared in workforce roster
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Current Shift
+                    </span>
+
+                    <strong id="workforceShiftName">—</strong>
+
+                    <small id="workforceShiftTime">
+                        No active shift
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Active Assignments
+                    </span>
+
+                    <strong id="workforceAssignmentCount">0</strong>
+
+                    <small>
+                        Current move assignments
+                    </small>
+                </article>
+
+            </section>
+
+            <section class="workforce-page-layout">
+
+                <article class="panel workforce-control-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                TERMINAL WORKFORCE
+                            </p>
+
+                            <h3>Worker Roster</h3>
+                        </div>
+                    </div>
+
+                    <div class="workforce-toolbar">
+
+                        <input
+                            id="workforceSearch"
+                            type="text"
+                            placeholder="Search worker, employee number or job"
+                            autocomplete="off"
+                        >
+
+                        <select id="workforceStatusFilter">
+                            <option value="ALL">
+                                All Workers
+                            </option>
+
+                            <option value="ACTIVE">
+                                Active
+                            </option>
+
+                            <option value="INACTIVE">
+                                Inactive
+                            </option>
+                        </select>
+
+                    </div>
+
+                    <div
+                        id="workforceGrid"
+                        class="workforce-card-grid"
+                    ></div>
+
+                </article>
+
+                <aside class="panel workforce-detail-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">
+                                WORKER DETAIL
+                            </p>
+
+                            <h3>Workforce Profile</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        id="workforceDetail"
+                        class="workforce-detail-empty"
+                    >
+                        Select a worker to view details.
+                    </div>
+
+                </aside>
+
+            </section>
+
+            <section class="panel workforce-shift-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">
+                            SHIFT OPERATIONS
+                        </p>
+
+                        <h3>Current Shift</h3>
+                    </div>
+                </div>
+
+                <div
+                    id="workforceShiftDetail"
+                    class="workforce-shift-detail"
+                ></div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/workforce.js') }}"
+    ></script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>IronHook | Access History</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/vessel_operations.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='demo/access_history.css') }}"
+    >
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">IH</div>
+
+                <div>
+                    <h1>IRONHOOK</h1>
+                    <span>LIVE TERMINAL</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item">
+                    ◫ Overview
+                </a>
+
+                <a href="/demo" class="nav-item">
+                    ▦ Vessel Operations
+                </a>
+
+                <a href="/demo/yard" class="nav-item">
+                    ▤ Yard Map
+                </a>
+
+                <a href="/demo/containers" class="nav-item">
+                    □ Containers
+                </a>
+
+                <a href="/demo/equipment" class="nav-item">
+                    ⌁ Equipment
+                </a>
+
+                <a href="/demo/trucks" class="nav-item">
+                    ▣ Trucks
+                </a>
+
+                <a href="/demo/workforce" class="nav-item">
+                    ♙ Workforce
+                </a>
+
+                <a href="#" class="nav-item">
+                    ✓ Assignments
+                </a>
+
+                <a href="#" class="nav-item">
+                    ⇄ Gate Activity
+                </a>
+
+                <a
+                    href="/demo/access-history"
+                    class="nav-item active"
+                >
+                    ◉ Access History
+                </a>
+
+                <a href="#" class="nav-item">
+                    ! Alerts
+                </a>
+
+                <a href="#" class="nav-item">
+                    ↗ Analytics
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Terminal Online
+                </div>
+
+                <div class="demo-label">
+                    SIMULATED DATA
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">
+                        SECURITY + WORKFORCE CONTROL
+                    </p>
+
+                    <h2>Credential Access History</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="terminal-status">
+                        <span class="status-dot"></span>
+                        Audit System Online
+                    </div>
+                </div>
+            </header>
+
+            <section class="demo-banner">
+                Credential Authorization Audit
+                <span>
+                    Live Granted + Denied Events
+                </span>
+            </section>
+
+            <section class="access-kpi-grid">
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Recent Scans
+                    </span>
+
+                    <strong id="scanCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Loaded audit events
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Granted
+                    </span>
+
+                    <strong id="grantedCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Authorized scans
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Denied
+                    </span>
+
+                    <strong id="deniedCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Blocked access attempts
+                    </small>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Equipment Scans
+                    </span>
+
+                    <strong id="equipmentScanCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Equipment authorization checks
+                    </small>
+                </article>
+
+            </section>
+
+            <section class="panel access-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">
+                            SECURITY AUDIT LOG
+                        </p>
+
+                        <h3>
+                            Recent Credential Activity
+                        </h3>
+                    </div>
+
+                    <button
+                        id="refreshAccessHistory"
+                        class="access-refresh-button"
+                    >
+                        Refresh
+                    </button>
+                </div>
+
+                <div class="access-toolbar">
+
+                    <input
+                        id="accessSearch"
+                        type="text"
+                        placeholder="Search worker, equipment, credential or location"
+                        autocomplete="off"
+                    >
+
+                    <select id="accessResultFilter">
+                        <option value="ALL">
+                            All Results
+                        </option>
+
+                        <option value="GRANTED">
+                            Granted
+                        </option>
+
+                        <option value="DENIED">
+                            Denied
+                        </option>
+                    </select>
+
+                    <select id="accessTypeFilter">
+                        <option value="ALL">
+                            All Scan Types
+                        </option>
+
+                        <option value="EQUIPMENT_ASSIGNMENT">
+                            Equipment Assignment
+                        </option>
+
+                        <option value="BADGE_IN">
+                            Badge In
+                        </option>
+
+                        <option value="HIRE_SELECTION">
+                            Hire Selection
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="access-table-wrapper">
+                    <table class="access-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Worker</th>
+                                <th>Scan Type</th>
+                                <th>Equipment</th>
+                                <th>Result</th>
+                                <th>Reason</th>
+                                <th>Station</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="accessHistoryBody">
+                            <tr>
+                                <td colspan="7">
+                                    Loading credential history...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='demo/access_history.js') }}"
+    ></script>
+</body>
+</html>

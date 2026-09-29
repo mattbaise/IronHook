@@ -2,9 +2,9 @@ name: IronHook tests
 
 on:
   push:
-    branches: [main, ironhook-v3]
+    branches: [main, ironhook-v3, ironhook-v2, feature/ironhook-integrated-platform]
   pull_request:
-    branches: [main]
+    branches: [main, ironhook-v2]
 
 jobs:
   test:
@@ -21,22 +21,30 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Run complete test suite
         run: python -m pytest -v
-      - name: Package verified IronHook v3
+      - name: Package verified IronHook integrated platform
         uses: actions/upload-artifact@v4
         with:
-          name: IronHook_v3
+          name: IronHook_integrated_platform
           path: |
             .env.example
             .gitignore
             README.md
             app.py
+            auth.py
             db.py
+            manage.py
             ironhook_container_schema_v1.sql
             ironhook_demo_data_v1.sql
+            ironhook_*_v1.sql
+            migrations/
             requirements.txt
             routes.py
+            scripts/
+            security_operations.py
             static/
             templates/
+            terminal_admin.py
             tests/
             validation.py
+            worker_portal.py
           if-no-files-found: error

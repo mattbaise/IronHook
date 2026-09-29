@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" role="img" aria-labelledby="title desc">
+  <title id="title">Demo operator headshot</title><desc id="desc">Professional illustrated terminal operator headshot.</desc>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#173844"/><stop offset="1" stop-color="#07161d"/></linearGradient><linearGradient id="vest" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f4bb35"/><stop offset="1" stop-color="#cf8315"/></linearGradient></defs>
+  <rect width="320" height="400" rx="24" fill="url(#bg)"/><path d="M0 330c70-55 250-55 320 0v70H0z" fill="#0b2029"/>
+  <path d="M65 400v-55c0-66 43-104 95-104s95 38 95 104v55z" fill="url(#vest)"/><path d="M118 246l42 67 42-67 27 16-35 138h-68L91 262z" fill="#f2f7f8"/><path d="M137 293h46l10 107h-66z" fill="#19313b"/>
+  <ellipse cx="160" cy="165" rx="67" ry="82" fill="#8e5b3d"/><path d="M94 165c-4-58 16-96 66-101 47 2 69 37 68 94-17-28-40-40-70-41-25 0-46 13-64 48z" fill="#17191b"/><path d="M105 183c7 57 31 82 55 82 26 0 51-27 58-84-12 18-28 26-54 26-27 0-45-8-59-24z" fill="#7b4932"/>
+  <ellipse cx="134" cy="166" rx="6" ry="5" fill="#101719"/><ellipse cx="186" cy="166" rx="6" ry="5" fill="#101719"/><path d="M142 198c12 8 25 8 37 0" fill="none" stroke="#e6b091" stroke-width="4" stroke-linecap="round"/>
+  <path d="M83 126c5-52 31-82 77-82s72 30 77 82z" fill="#e9a61b"/><path d="M70 126h180c-8 17-27 22-45 19H112c-19 3-34-3-42-19z" fill="#f3bd3e"/><rect x="139" y="64" width="42" height="32" rx="4" fill="#15303a"/><text x="160" y="86" fill="#63d5cd" font-family="Arial,sans-serif" font-size="16" font-weight="700" text-anchor="middle">IH</text>
+  <path d="M85 325l48 13-6 62H82zM235 325l-48 13 6 62h45z" fill="#f7ca50"/><path d="M82 353h47M191 353h47" stroke="#e8f0f2" stroke-width="8"/>
+</svg>

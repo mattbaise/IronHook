@@ -3,93 +3,86 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101820">
-  <title>IronHook Operator</title>
+  <meta name="theme-color" content="#0c141b">
+  <title>IronHook | My IronHook</title>
+  <link rel="icon" href="{{ url_for('static', filename='ironhook_mark.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='demo/vessel_operations.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='integrated_shell.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='operator.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='operator_portal.css') }}">
 </head>
-<body>
-  <header class="operator-header">
-    <div>
-      <p class="brand">IRONHOOK <span>BY BAISELINE</span></p>
-      <h1>Operator</h1>
-      <p class="muted">My dispatch assignments</p>
-    </div>
-    <a href="/" class="command-link">Command Center</a>
-  </header>
+<body data-user-id="{{ current_user.user_id }}" data-worker-id="{{ current_user.worker_id or '' }}" data-display-name="{{ current_user.display_name }}" data-role="{{ current_user.role_code }}" data-employee-number="{{ current_user.employee_number or '' }}" data-job-classification="{{ current_user.job_classification or '' }}" data-union-local="{{ current_user.union_local_code or '' }}"><div class="app-shell operator-shell">
+  <aside class="sidebar operator-sidebar"><div class="brand"><div class="brand-mark">IH</div><div><h1>IRONHOOK</h1><span>MY IRONHOOK</span></div></div><nav class="sidebar-nav" aria-label="Operator portal"><a href="#view-dispatch" class="nav-item nav-tab active" data-view="dispatch">⌁ Dispatch</a><a href="#view-hours" class="nav-item nav-tab" data-view="hours">◷ Hours</a><a href="#view-pay" class="nav-item nav-tab" data-view="pay">$ Pay</a><a href="#view-schedule" class="nav-item nav-tab" data-view="schedule">▦ Schedule</a><a href="#view-credentials" class="nav-item nav-tab" data-view="credentials">✓ Credentials</a><a href="#view-documents" class="nav-item nav-tab" data-view="documents">□ Documents</a><a href="#view-profile" class="nav-item nav-tab" data-view="profile">♙ Profile</a></nav><div class="sidebar-footer"><div class="system-status"><span class="status-dot"></span>Secure Worker Session</div><button id="logout-button" class="shell-logout" type="button">Sign out</button></div></aside>
+  <main class="main-content operator-main"><header class="topbar"><div><p class="eyebrow">WORKER SERVICES</p><h2>My IronHook</h2></div><div class="topbar-right"><a class="operator-replay-link" href="/workday-replay">▶ Replay Operations</a><div class="terminal-status"><span class="status-dot"></span><span id="identity-line">Secure worker session</span></div></div></header><section class="demo-banner">Operator Portal <span>Dispatch · hours · pay · credentials</span></section>
+  <nav class="mobile-portal-nav" aria-label="Mobile operator portal"><a href="#view-dispatch" class="nav-tab active" data-view="dispatch">Dispatch</a><a href="#view-hours" class="nav-tab" data-view="hours">Hours</a><a href="#view-pay" class="nav-tab" data-view="pay">Pay</a><a href="#view-schedule" class="nav-tab" data-view="schedule">Schedule</a><a href="#view-credentials" class="nav-tab" data-view="credentials">Credentials</a><a href="#view-documents" class="nav-tab" data-view="documents">Documents</a><a href="#view-profile" class="nav-tab" data-view="profile">Profile</a></nav>
+    <section id="view-dispatch" class="portal-view active">
+      <section class="identity-card">
+        <div><p class="overline">SIGNED IN OPERATOR</p><h2 id="worker-name">{{ current_user.display_name }}</h2><p class="helper" id="worker-meta">{{ current_user.employee_number or 'Employee' }} · {{ current_user.job_classification or 'Operator' }} · {{ current_user.union_local_code or 'Union status unavailable' }}</p></div>
+        <span class="secure-pill">SECURE SESSION</span>
+      </section>
+      <section class="toolbar"><div><p class="overline">LIVE DISPATCH</p><h2>Assignments <span id="assignment-count">—</span></h2></div><button id="refresh-button" class="secondary" type="button">Refresh</button></section>
+      <div id="connection-status" class="connection-status" role="status"><i></i><span>Connecting to dispatch…</span></div>
+      <section id="assignments" class="assignment-list" aria-live="polite"><article class="assignment-card"><div class="assignment-main"><div class="assignment-top"><div><p class="overline">DEMO ASSIGNMENT</p><strong class="container-number">MSCU1234567</strong></div><span class="status">ASSIGNED</span></div><div class="route"><div><span>PICK UP</span><strong>CHIQUITA EXPLORER · Bay 08</strong></div><b class="route-arrow">→</b><div><span>DELIVER</span><strong>IMPORT · A-03-12-2</strong></div></div><div class="detail-grid"><div><span>Operator</span><strong>{{ current_user.display_name }}</strong></div><div><span>Equipment</span><strong>YT-17 · READY</strong></div></div></div><div class="card-actions"><a class="demo-action" href="/workday-replay">Run interactive workday demo</a></div></article></section>
+    </section>
 
-  <main>
-    <section class="worker-panel" aria-labelledby="worker-heading">
-      <div>
-        <p class="overline">SHIFT SIGN-IN</p>
-        <h2 id="worker-heading">Operator ID</h2>
+    <section id="view-hours" class="portal-view">
+      <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Hours & Work History</h2><p class="helper">Container, general cargo, overtime and credited hours by shift and gang.</p></div>
+      <div class="metric-grid">
+        <article class="metric"><span>Container Hours</span><strong id="container-hours">0.00</strong></article>
+        <article class="metric"><span>General Cargo</span><strong id="cargo-hours">0.00</strong></article>
+        <article class="metric"><span>Overtime</span><strong id="overtime-hours">0.00</strong></article>
+        <article class="metric"><span>Credited YTD</span><strong id="credited-hours">0.00</strong></article>
       </div>
-      <form id="worker-form">
-        <label for="worker-id">Worker ID</label>
-        <div class="worker-entry">
-          <input id="worker-id" name="worker_id" type="number" min="1" inputmode="numeric" placeholder="Example: 1" required>
-          <button type="submit">Save</button>
-        </div>
-      </form>
-      <p id="worker-message" class="helper">Enter the worker ID assigned by dispatch.</p>
+      <div class="data-card"><div class="data-card-head"><h3>Recent Shifts</h3><span>Gang + credited time</span></div><div id="shift-history" class="history-list"></div></div>
     </section>
 
-    <section class="toolbar">
-      <div>
-        <p class="overline">LIVE DISPATCH</p>
-        <h2>Assignments <span id="assignment-count">—</span></h2>
+    <section id="view-pay" class="portal-view">
+      <div class="section-head"><p class="overline">PRIVATE WORKER INFORMATION</p><h2>Pay & Financial Overview</h2><p class="helper">Visible only to this worker and authorized payroll personnel.</p></div>
+      <div class="metric-grid">
+        <article class="metric"><span>Gross YTD</span><strong id="gross-ytd">$0.00</strong></article>
+        <article class="metric"><span>Net YTD</span><strong id="net-ytd">$0.00</strong></article>
+        <article class="metric"><span>Taxes YTD</span><strong id="tax-ytd">$0.00</strong></article>
+        <article class="metric"><span>Retirement YTD</span><strong id="retirement-ytd">$0.00</strong></article>
       </div>
-      <button id="refresh-button" class="secondary" type="button">Refresh</button>
+      <div class="data-card"><div class="data-card-head"><h3>Pay History</h3><span>Authoritative payroll data</span></div><div id="pay-history" class="history-list"></div></div>
+      <p class="privacy-note">IronHook displays payroll information supplied by the configured payroll system; it does not calculate official payroll.</p>
     </section>
 
-    <div id="connection-status" class="connection-status" role="status">
-      <i></i><span>Connecting to dispatch…</span>
-    </div>
-
-    <section id="assignments" class="assignment-list" aria-live="polite">
-      <article class="empty-state">Loading assignments…</article>
+    <section id="view-credentials" class="portal-view">
+      <div class="section-head"><p class="overline">WORKER CLEARANCE</p><h2>Credentials & Certifications</h2></div>
+      {% if current_user.worker_id %}<div class="operator-qr-card"><div><p class="overline">DIGITAL CASUAL CARD</p><h3>Scan-ready worker credential</h3><p class="helper">Use this signed QR at badge-in, gate access, hire selection and equipment checkout.</p><a href="/workday-replay">Use credential in workday replay →</a></div><img src="/api/workers/{{ current_user.worker_id }}/credential/qr" alt="{{ current_user.display_name }} worker credential QR code"></div>{% endif %}
+      <div class="credential-ledger-head"><div><p class="overline">COMPLETE RECORD</p><h3>Certification history</h3></div><span>Current and past qualifications</span></div>
+      <div id="credential-list" class="credential-grid"><article class="credential-card"><p class="overline">YARD-TRACTOR · ACTIVE</p><h3>Yard Tractor Operator</h3><dl><div><dt>Certified</dt><dd>Jan 10, 2026</dd></div><div><dt>Expires</dt><dd>Jan 10, 2027</dd></div><div><dt>Signed off by</dt><dd>A. Robinson, Equipment Training Lead</dd></div><div><dt>Issuer</dt><dd>BaiseLine Terminal Training Center</dd></div></dl></article></div>
     </section>
-  </main>
+
+    <section id="view-schedule" class="portal-view">
+      <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Schedule & Gang</h2><p class="helper">Upcoming reporting times, locations and gang assignments.</p></div>
+      <div class="data-card"><div id="schedule-list" class="history-list"><div class="history-row"><div><span>START</span><strong>Tomorrow · 6:00 AM–2:00 PM</strong></div><div><span>GANG</span><strong>GANG-12 · Yard & Vessel</strong></div><div><span>REPORT TO</span><strong>Dispatch Hall A</strong></div></div></div></div>
+    </section>
+
+    <section id="view-documents" class="portal-view">
+      <div class="section-head"><p class="overline">PRIVATE WORKER INFORMATION</p><h2>My Documents</h2><p class="helper">Status and expiry information for documents linked to your worker record.</p></div>
+      <div id="document-list" class="credential-grid"><article class="credential-card"><p class="overline">IDENTITY · CURRENT</p><h3>TWIC Card</h3><dl><div><dt>Issued</dt><dd>Sep 22, 2025</dd></div><div><dt>Expires</dt><dd>Sep 22, 2028</dd></div><div><dt>Reference</dt><dd>DEMO-TWIC-MB1001</dd></div></dl></article></div>
+    </section>
+
+    <section id="view-profile" class="portal-view">
+      <div class="section-head"><p class="overline">MY IRONHOOK</p><h2>Worker Profile</h2></div>
+      <div class="profile-overview data-card"><div class="worker-headshot"><img src="{{ url_for('static', filename='demo/operator_headshot.svg') }}" alt="Headshot of {{ current_user.display_name }}"><span class="profile-active">ACTIVE</span></div><div><p class="overline">YARD OPERATIONS</p><h3>{{ current_user.display_name }}</h3><p>{{ current_user.job_classification or 'Operator' }}</p><small>{{ current_user.employee_number or 'Employee number not on file' }} · {{ current_user.union_local_code or 'Union local not on file' }}</small></div></div>
+      <div id="profile-card" class="data-card profile-grid"><div class="profile-item"><span>Employee number</span><strong>{{ current_user.employee_number or 'Not on file' }}</strong></div><div class="profile-item"><span>Classification</span><strong>{{ current_user.job_classification or 'Not on file' }}</strong></div><div class="profile-item"><span>Union local</span><strong>{{ current_user.union_local_code or 'Not on file' }}</strong></div><div class="profile-item"><span>Record status</span><strong>Active worker</strong></div></div>
+    </section>
+  <footer>Stay alert · Confirm the box and destination · Stop work whenever conditions are unsafe</footer></main></div>
 
   <dialog id="action-dialog">
     <form id="action-form">
-      <div class="dialog-head">
-        <div>
-          <p class="overline" id="dialog-overline">MOVE ACTION</p>
-          <h2 id="dialog-title">Update assignment</h2>
-        </div>
-        <button id="close-dialog" class="icon-button" type="button" aria-label="Close">×</button>
-      </div>
-      <input id="dialog-assignment-id" type="hidden">
-      <input id="dialog-action" type="hidden">
-
-      <div id="complete-fields" hidden>
-        <label for="confirmation-method">Confirmation method</label>
-        <select id="confirmation-method">
-          <option value="SCAN">Scanner</option>
-          <option value="RFID">RFID</option>
-          <option value="GPS">GPS</option>
-          <option value="MANUAL">Manual confirmation</option>
-        </select>
-
-        <label for="operating-minutes">Operating minutes</label>
-        <input id="operating-minutes" type="number" min="1" max="720" inputmode="numeric" value="10">
-
-        <label for="completion-notes">Completion notes</label>
-        <textarea id="completion-notes" rows="3" placeholder="Container and destination confirmed"></textarea>
-      </div>
-
-      <div id="safety-fields" hidden>
-        <label for="safety-reason">Why is work stopping?</label>
-        <textarea id="safety-reason" rows="4" minlength="5" placeholder="Describe the safety concern clearly"></textarea>
-        <p class="safety-note">Safety stops take effect immediately and are recorded.</p>
-      </div>
-
-      <p id="dialog-error" class="error" role="alert"></p>
-      <button id="confirm-action" class="primary wide" type="submit">Confirm</button>
+      <div class="dialog-head"><div><p class="overline" id="dialog-overline">MOVE ACTION</p><h2 id="dialog-title">Update assignment</h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Close">×</button></div>
+      <input id="dialog-assignment-id" type="hidden"><input id="dialog-action" type="hidden">
+      <div id="start-fields" hidden><label for="credential-scan-event-id">Equipment authorization scan event</label><input id="credential-scan-event-id" type="number" min="1" inputmode="numeric" placeholder="Scan credential, then enter event ID"><p class="helper">Equipment moves require a recent, unused IronHook equipment credential scan.</p></div>
+      <div id="complete-fields" hidden><label for="confirmation-method">Confirmation method</label><select id="confirmation-method"><option value="SCAN">Scanner</option><option value="RFID">RFID</option><option value="GPS">GPS</option><option value="MANUAL">Manual confirmation</option></select><label for="operating-minutes">Operating minutes</label><input id="operating-minutes" type="number" min="1" max="720" inputmode="numeric" value="10"><label for="completion-notes">Completion notes</label><textarea id="completion-notes" rows="3" placeholder="Container and destination confirmed"></textarea></div>
+      <div id="safety-fields" hidden><label for="safety-reason">Why is work stopping?</label><textarea id="safety-reason" rows="4" minlength="5" placeholder="Describe the safety concern clearly"></textarea><p class="safety-note">Safety stops take effect immediately and are recorded.</p></div>
+      <p id="dialog-error" class="error" role="alert"></p><button id="confirm-action" class="primary wide" type="submit">Confirm</button>
     </form>
   </dialog>
 
-  <footer>Stay alert · Confirm the box and destination · Stop work whenever conditions are unsafe</footer>
   <script src="{{ url_for('static', filename='operator.js') }}"></script>
 </body>
 </html>
