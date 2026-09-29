@@ -4,7 +4,10 @@ IronHook by BaiseLine is a longshoreman-first terminal operations platform built
 with Flask, PostgreSQL, Jinja, HTML, CSS and JavaScript. The integrated feature
 branch connects Command Center operations, the mobile Operator/My IronHook
 portal, configurable multi-terminal yards, cargo security and administration.
+![IronHook Command Center showing live terminal operations](ironhook-command-center.png)
 
+*IronHook Command Center connects vessel production, yard capacity, equipment
+readiness and operational events in one live terminal view.*
 ## Platform areas
 
 - `/` — authenticated Command Center with live capacity, dispatch, equipment,
