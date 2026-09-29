@@ -3,7 +3,10 @@
 IronHook is a beginner-friendly Flask and PostgreSQL training project for terminal container movements.
 
 It includes two browser screens:
+![IronHook Command Center showing live terminal operations](ironhook-command-center.png)
 
+*IronHook Command Center connects vessel production, yard capacity, equipment
+readiness and operational events in one live terminal view.*
 - **Command Center:** live yard capacity, equipment readiness, active dispatch and container tracking.
 - **Operator:** a mobile-friendly longshoreman screen for starting assignments, completing moves and stopping work for safety.
 
