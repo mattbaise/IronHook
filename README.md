@@ -2,9 +2,9 @@
 
 # IronHook v3
 
-IronHook is a beginner-friendly Flask and PostgreSQL training project for terminal container movements.
+IronHook is an integrated Flask and PostgreSQL platform for terminal operations, combining vessel and yard coordination, workforce workflows, cargo security, analytics, and role-based access in one application.
 
-It includes two browser screens:
+The platform connects its command-center and operator workspaces through shared operational data:
 
 *IronHook Command Center connects vessel production, yard capacity, equipment
 readiness and operational events in one live terminal view.*
